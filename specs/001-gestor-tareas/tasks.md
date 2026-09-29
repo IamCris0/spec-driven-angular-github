@@ -9,17 +9,17 @@ Cada fase se entrega en su propia rama y Pull Request.
 
 ## Fase 1: Preparación (rama `feature/002-estructura`)
 
-- [ ] T001 Crear `backend/` con `package.json`, Express, better-sqlite3, Jest y Supertest
-- [ ] T002 [P] Crear `frontend/` con Angular CLI
-- [ ] T003 [P] Agregar `.gitignore` para Node, Angular y la base de datos local
-- [ ] T004 Crear `.github/workflows/ci.yml` con los jobs de backend y frontend
+- [x] T001 Crear `backend/` con `package.json`, Express, better-sqlite3, Jest y Supertest
+- [x] T002 [P] Crear `frontend/` con Angular CLI
+- [x] T003 [P] Agregar `.gitignore` para Node, Angular y la base de datos local
+- [x] T004 Crear `.github/workflows/ci.yml` con los jobs de backend y frontend
 
 ## Fase 2: Base (bloquea las historias)
 
-- [ ] T005 `backend/src/db.js`: conexión SQLite y creación de la tabla `tasks`
-- [ ] T006 `backend/src/app.js`: Express con JSON, CORS y manejo de errores
-- [ ] T007 [P] `frontend/src/app/models/task.ts`: interfaz `Task` y tipos de estado y prioridad
-- [ ] T008 [P] `frontend/src/app/services/task.service.ts`: cliente HTTP de la API
+- [x] T005 `backend/src/db.js`: conexión SQLite y creación de la tabla `tasks`
+- [x] T006 `backend/src/app.js`: Express con JSON, CORS y manejo de errores
+- [x] T007 [P] `frontend/src/app/models/task.ts`: interfaz `Task` y tipos de estado y prioridad
+- [x] T008 [P] `frontend/src/app/services/task.service.ts`: cliente HTTP de la API
 
 ## Fase 3: Historias P1 — MVP (rama `feature/003-mvp-tablero`)
 

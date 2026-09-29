@@ -27,9 +27,9 @@ specs/001-gestor-tareas/
 ├── plan.md                       Cómo se construye (tecnología, datos, API)
 └── tasks.md                      Tareas ordenadas para implementar
 docs/flujo-de-trabajo.md          Ramas, commits, PR, code review y gestión
-backend/                          API REST + SQLite (próxima fase)
-frontend/                         Aplicación Angular (próxima fase)
-.github/workflows/                Pipeline CI/CD (próxima fase)
+backend/                          API REST + SQLite
+frontend/                         Aplicación Angular
+.github/workflows/                Pipeline CI/CD
 ```
 
 ## Flujo SDD aplicado
