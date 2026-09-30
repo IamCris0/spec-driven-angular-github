@@ -1,4 +1,6 @@
 const express = require('express');
+const { createTasksRepository } = require('./tasks.repository');
+const { createTasksRouter } = require('./tasks.routes');
 
 // Origen del frontend de Angular durante el desarrollo (ng serve).
 const FRONTEND_ORIGIN = 'http://localhost:4200';
@@ -43,11 +45,12 @@ function errorHandler(err, req, res, next) {
   res.status(500).json({ error: 'Error interno del servidor' });
 }
 
-function createApp() {
+function createApp(db) {
   const app = express();
 
   app.use(cors);
   app.use(express.json());
+  app.use('/api/tasks', createTasksRouter(createTasksRepository(db)));
   app.use(notFound);
   app.use(errorHandler);
 

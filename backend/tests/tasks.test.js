@@ -34,7 +34,12 @@ describe('API de tareas', () => {
     it('guarda descripción, prioridad y responsable', async () => {
       const res = await request(app)
         .post('/api/tasks')
-        .send({ title: 'Revisar PR', description: 'Del compañero', priority: 'alta', assignee: 'Ana' });
+        .send({
+          title: 'Revisar PR',
+          description: 'Del compañero',
+          priority: 'alta',
+          assignee: 'Ana',
+        });
 
       expect(res.status).toBe(201);
       expect(res.body).toMatchObject({
@@ -51,7 +56,9 @@ describe('API de tareas', () => {
     });
 
     it('acepta un título de 120 caracteres', async () => {
-      const res = await request(app).post('/api/tasks').send({ title: 'a'.repeat(120) });
+      const res = await request(app)
+        .post('/api/tasks')
+        .send({ title: 'a'.repeat(120) });
 
       expect(res.status).toBe(201);
     });
@@ -152,7 +159,9 @@ describe('API de tareas', () => {
         task.id,
       );
 
-      const res = await request(app).patch(`/api/tasks/${task.id}/status`).send({ status: 'hecha' });
+      const res = await request(app)
+        .patch(`/api/tasks/${task.id}/status`)
+        .send({ status: 'hecha' });
 
       expect(res.body.updated_at).not.toBe('2020-01-01T00:00:00.000Z');
       expect(res.body.created_at).toBe(task.created_at);
