@@ -24,17 +24,17 @@ Cada fase se entrega en su propia rama y Pull Request.
 ## Fase 3: Historias P1 — MVP (rama `feature/003-mvp-tablero`)
 
 ### Pruebas primero (deben fallar antes de implementar)
-- [ ] T009 [H1] Prueba: `POST /api/tasks` crea una tarea y responde 201
-- [ ] T010 [H1] Prueba: `POST /api/tasks` sin título responde 400
-- [ ] T011 [H2] Prueba: `GET /api/tasks` devuelve la lista
-- [ ] T012 [H3] Prueba: `PATCH /api/tasks/:id/status` cambia el estado y valida valores
+- [x] T009 [H1] Prueba: `POST /api/tasks` crea una tarea y responde 201
+- [x] T010 [H1] Prueba: `POST /api/tasks` sin título responde 400
+- [x] T011 [H2] Prueba: `GET /api/tasks` devuelve la lista
+- [x] T012 [H3] Prueba: `PATCH /api/tasks/:id/status` cambia el estado y valida valores
 
 ### Implementación
-- [ ] T013 [H1] `tasks.repository.js` y `tasks.routes.js`: crear y listar tareas con validación
-- [ ] T014 [H3] Endpoint para cambiar estado
-- [ ] T015 [H1] Componente `task-form` con formulario reactivo y validaciones
-- [ ] T016 [H2] Componente `board` con las tres columnas y mensaje de tablero vacío
-- [ ] T017 [H3] Botones para mover una tarea entre columnas
+- [x] T013 [H1] `tasks.repository.js` y `tasks.routes.js`: crear y listar tareas con validación
+- [x] T014 [H3] Endpoint para cambiar estado
+- [x] T015 [H1] Componente `task-form` con formulario reactivo y validaciones
+- [x] T016 [H2] Componente `board` con las tres columnas y mensaje de tablero vacío
+- [x] T017 [H3] Botones para mover una tarea entre columnas
 
 ## Fase 4: Historias P2 y P3 (rama `feature/004-editar-filtrar`)
 

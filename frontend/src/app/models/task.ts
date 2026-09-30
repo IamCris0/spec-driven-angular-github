@@ -1,6 +1,15 @@
-export type TaskStatus = 'pendiente' | 'en_progreso' | 'hecha';
+export const TASK_STATUSES = ['pendiente', 'en_progreso', 'hecha'] as const;
+export type TaskStatus = (typeof TASK_STATUSES)[number];
 
-export type TaskPriority = 'baja' | 'media' | 'alta';
+export const TASK_PRIORITIES = ['baja', 'media', 'alta'] as const;
+export type TaskPriority = (typeof TASK_PRIORITIES)[number];
+
+/** Nombre de cada estado como se muestra en las columnas del tablero. */
+export const STATUS_LABELS: Record<TaskStatus, string> = {
+  pendiente: 'Por hacer',
+  en_progreso: 'En progreso',
+  hecha: 'Hecho',
+};
 
 /** Tarea tal como la devuelve la API: los nombres coinciden con las columnas de la tabla `tasks`. */
 export interface Task {

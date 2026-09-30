@@ -1,0 +1,57 @@
+import { Component, output, signal } from '@angular/core';
+import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { TASK_PRIORITIES, TaskInput, TaskPriority } from '../../models/task';
+
+const MAX_TITLE_LENGTH = 120;
+
+function titleValidator(control: AbstractControl<string>) {
+  const title = control.value.trim();
+  if (title === '') {
+    return { required: true };
+  }
+  return title.length > MAX_TITLE_LENGTH ? { maxlength: true } : null;
+}
+
+@Component({
+  selector: 'app-task-form',
+  imports: [ReactiveFormsModule],
+  templateUrl: './task-form.html',
+  styleUrl: './task-form.css',
+})
+export class TaskForm {
+  readonly saved = output<TaskInput>();
+
+  protected readonly priorities = TASK_PRIORITIES;
+  protected readonly submitted = signal(false);
+  protected readonly form = new FormGroup({
+    title: new FormControl('', { nonNullable: true, validators: [titleValidator] }),
+    description: new FormControl('', { nonNullable: true }),
+    priority: new FormControl<TaskPriority>('media', { nonNullable: true }),
+    assignee: new FormControl('', { nonNullable: true }),
+  });
+
+  protected get title() {
+    return this.form.controls.title;
+  }
+
+  protected submit(): void {
+    if (this.form.invalid) {
+      this.submitted.set(true);
+      this.title.markAsTouched();
+      return;
+    }
+
+    const { title, description, priority, assignee } = this.form.getRawValue();
+    const task: TaskInput = { title: title.trim(), priority };
+    if (description.trim()) {
+      task.description = description.trim();
+    }
+    if (assignee.trim()) {
+      task.assignee = assignee.trim();
+    }
+
+    this.saved.emit(task);
+    this.form.reset();
+    this.submitted.set(false);
+  }
+}

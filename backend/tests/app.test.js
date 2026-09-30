@@ -1,8 +1,11 @@
 const express = require('express');
 const request = require('supertest');
-const { createApp, errorHandler } = require('../src/app');
+const { createApp: buildApp, errorHandler } = require('../src/app');
+const { createDb } = require('../src/db');
 
 const FRONTEND_ORIGIN = 'http://localhost:4200';
+
+const createApp = () => buildApp(createDb(':memory:'));
 
 describe('app: CORS', () => {
   it('responde la petición previa (preflight) del frontend', async () => {
