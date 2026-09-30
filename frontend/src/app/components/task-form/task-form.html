@@ -1,0 +1,38 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div class="field">
+    <label for="title">Título</label>
+    <input id="title" type="text" formControlName="title" />
+    @if (title.invalid && (title.touched || submitted())) {
+      <p class="error" data-error="title">
+        @if (title.hasError('required')) {
+          El título es obligatorio
+        } @else {
+          El título no puede superar los 120 caracteres
+        }
+      </p>
+    }
+  </div>
+
+  <div class="field">
+    <label for="description">Descripción</label>
+    <textarea id="description" rows="2" formControlName="description"></textarea>
+  </div>
+
+  <div class="row">
+    <div class="field">
+      <label for="priority">Prioridad</label>
+      <select id="priority" formControlName="priority">
+        @for (priority of priorities; track priority) {
+          <option [value]="priority">{{ priority }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="assignee">Responsable</label>
+      <input id="assignee" type="text" formControlName="assignee" />
+    </div>
+  </div>
+
+  <button type="submit">Crear tarea</button>
+</form>

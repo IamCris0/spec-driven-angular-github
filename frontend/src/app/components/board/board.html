@@ -1,0 +1,20 @@
+<app-task-form (saved)="create($event)" />
+
+@if (error(); as message) {
+  <p class="alert" role="alert">{{ message }}</p>
+}
+
+@if (loaded() && tasks().length === 0) {
+  <p class="empty">No hay tareas todavía</p>
+}
+
+<div class="columns">
+  @for (column of columns(); track column.status) {
+    <section [attr.data-status]="column.status">
+      <h2>{{ column.label }}</h2>
+      @for (task of column.tasks; track task.id) {
+        <app-task-card [task]="task" (move)="move($event)" />
+      }
+    </section>
+  }
+</div>
