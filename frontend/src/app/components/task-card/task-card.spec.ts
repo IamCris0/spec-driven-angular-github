@@ -69,4 +69,24 @@ describe('TaskCard', () => {
 
     expect(moves).toEqual([{ id: 7, status: 'hecha' }]);
   });
+
+  it('emite edit con el id al pulsar Editar', async () => {
+    await render();
+    const edited: number[] = [];
+    fixture.componentInstance.edit.subscribe((id) => edited.push(id));
+
+    root.querySelector<HTMLButtonElement>('button[data-action="edit"]')!.click();
+
+    expect(edited).toEqual([7]);
+  });
+
+  it('emite remove con el id al pulsar Eliminar', async () => {
+    await render();
+    const removed: number[] = [];
+    fixture.componentInstance.remove.subscribe((id) => removed.push(id));
+
+    root.querySelector<HTMLButtonElement>('button[data-action="delete"]')!.click();
+
+    expect(removed).toEqual([7]);
+  });
 });
