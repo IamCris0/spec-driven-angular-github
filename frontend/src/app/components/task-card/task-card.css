@@ -51,3 +51,7 @@ button {
   font-size: 0.8125rem;
   cursor: pointer;
 }
+
+.danger {
+  color: #b42318;
+}

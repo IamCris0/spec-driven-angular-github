@@ -1,8 +1,11 @@
-import { Component, output, signal } from '@angular/core';
+import { Component, OnInit, input, output, signal } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { TASK_PRIORITIES, TaskInput, TaskPriority } from '../../models/task';
+import { TASK_PRIORITIES, Task, TaskInput, TaskPriority } from '../../models/task';
 
 const MAX_TITLE_LENGTH = 120;
+
+// Hay varios formularios a la vez (crear y editar): cada uno necesita ids únicos.
+let nextFormId = 0;
 
 function titleValidator(control: AbstractControl<string>) {
   const title = control.value.trim();
@@ -18,9 +21,13 @@ function titleValidator(control: AbstractControl<string>) {
   templateUrl: './task-form.html',
   styleUrl: './task-form.css',
 })
-export class TaskForm {
+export class TaskForm implements OnInit {
+  /** Tarea que se edita; sin ella el formulario crea una tarea nueva. */
+  readonly task = input<Task | null>(null);
   readonly saved = output<TaskInput>();
+  readonly cancelled = output<void>();
 
+  protected readonly formId = nextFormId++;
   protected readonly priorities = TASK_PRIORITIES;
   protected readonly submitted = signal(false);
   protected readonly form = new FormGroup({
@@ -29,6 +36,18 @@ export class TaskForm {
     priority: new FormControl<TaskPriority>('media', { nonNullable: true }),
     assignee: new FormControl('', { nonNullable: true }),
   });
+
+  ngOnInit(): void {
+    const task = this.task();
+    if (task) {
+      this.form.patchValue({
+        title: task.title,
+        description: task.description ?? '',
+        priority: task.priority,
+        assignee: task.assignee ?? '',
+      });
+    }
+  }
 
   protected get title() {
     return this.form.controls.title;
@@ -51,7 +70,9 @@ export class TaskForm {
     }
 
     this.saved.emit(task);
-    this.form.reset();
-    this.submitted.set(false);
+    if (!this.task()) {
+      this.form.reset();
+      this.submitted.set(false);
+    }
   }
 }

@@ -16,6 +16,8 @@ const MOVES: Record<TaskStatus, TaskStatus[]> = {
 export class TaskCard {
   readonly task = input.required<Task>();
   readonly move = output<{ id: number; status: TaskStatus }>();
+  readonly edit = output<number>();
+  readonly remove = output<number>();
 
   protected readonly targets = computed(() =>
     MOVES[this.task().status].map((status) => ({ status, label: STATUS_LABELS[status] })),
