@@ -1,0 +1,45 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div class="field">
+    <label [for]="'title-' + formId">Título</label>
+    <input [id]="'title-' + formId" type="text" formControlName="title" />
+    @if (title.invalid && (title.touched || submitted())) {
+      <p class="error" data-error="title">
+        @if (title.hasError('required')) {
+          El título es obligatorio
+        } @else {
+          El título no puede superar los 120 caracteres
+        }
+      </p>
+    }
+  </div>
+
+  <div class="field">
+    <label [for]="'description-' + formId">Descripción</label>
+    <textarea [id]="'description-' + formId" rows="2" formControlName="description"></textarea>
+  </div>
+
+  <div class="row">
+    <div class="field">
+      <label [for]="'priority-' + formId">Prioridad</label>
+      <select [id]="'priority-' + formId" formControlName="priority">
+        @for (priority of priorities; track priority) {
+          <option [value]="priority">{{ priority }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label [for]="'assignee-' + formId">Responsable</label>
+      <input [id]="'assignee-' + formId" type="text" formControlName="assignee" />
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button type="submit">{{ task() ? 'Guardar cambios' : 'Crear tarea' }}</button>
+    @if (task()) {
+      <button type="button" class="secondary" data-action="cancel" (click)="cancelled.emit()">
+        Cancelar
+      </button>
+    }
+  </div>
+</form>

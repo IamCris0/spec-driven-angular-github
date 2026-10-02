@@ -1,0 +1,38 @@
+# Dependencias
+node_modules/
+
+# Angular: salida de compilación, caché y temporales
+dist/
+out-tsc/
+.angular/
+.sass-cache/
+__screenshots__/
+
+# Cobertura de pruebas
+coverage/
+
+# Base de datos local de SQLite (backend/data/taskflow.db)
+backend/data/
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Registros
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Variables de entorno (pueden contener secretos)
+.env
+.env.*
+!.env.example
+
+Proyecto Parcial I - PA.pdf
+# Editores y sistema operativo
+.idea/
+.history/
+*.sublime-workspace
+.DS_Store
+Thumbs.db

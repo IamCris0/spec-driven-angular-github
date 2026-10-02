@@ -1,0 +1,27 @@
+<article class="task-card">
+  <h3>{{ task().title }}</h3>
+  @if (task().description) {
+    <p data-field="description">{{ task().description }}</p>
+  }
+  <p class="meta">
+    <span class="priority priority-{{ task().priority }}">{{ task().priority }}</span>
+    @if (task().assignee) {
+      <span data-field="assignee">{{ task().assignee }}</span>
+    }
+  </p>
+  <div class="actions">
+    @for (target of targets(); track target.status) {
+      <button
+        type="button"
+        [attr.data-move]="target.status"
+        (click)="move.emit({ id: task().id, status: target.status })"
+      >
+        Mover a {{ target.label }}
+      </button>
+    }
+    <button type="button" data-action="edit" (click)="edit.emit(task().id)">Editar</button>
+    <button type="button" class="danger" data-action="delete" (click)="remove.emit(task().id)">
+      Eliminar
+    </button>
+  </div>
+</article>
