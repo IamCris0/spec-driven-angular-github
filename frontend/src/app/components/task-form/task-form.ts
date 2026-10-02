@@ -19,7 +19,6 @@ function titleValidator(control: AbstractControl<string>) {
   selector: 'app-task-form',
   imports: [ReactiveFormsModule],
   templateUrl: './task-form.html',
-  styleUrl: './task-form.css',
 })
 export class TaskForm implements OnInit {
   /** Tarea que se edita; sin ella el formulario crea una tarea nueva. */

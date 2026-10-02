@@ -17,6 +17,12 @@ function errorMessage(error: HttpErrorResponse, notFound: string): string {
 
 const TASK_GONE = 'La tarea ya no existe';
 
+const COLUMN_DOTS: Record<TaskStatus, string> = {
+  pendiente: 'bg-slate-400',
+  en_progreso: 'bg-amber-400',
+  hecha: 'bg-emerald-500',
+};
+
 function sortedNames(names: Iterable<string>): string[] {
   return [...new Set(names)].sort((a, b) => a.localeCompare(b));
 }
@@ -25,7 +31,6 @@ function sortedNames(names: Iterable<string>): string[] {
   selector: 'app-board',
   imports: [TaskForm, TaskCard],
   templateUrl: './board.html',
-  styleUrl: './board.css',
 })
 export class Board {
   private readonly taskService = inject(TaskService);
@@ -43,6 +48,7 @@ export class Board {
     TASK_STATUSES.map((status) => ({
       status,
       label: STATUS_LABELS[status],
+      dot: COLUMN_DOTS[status],
       tasks: this.tasks().filter((task) => task.status === status),
     })),
   );
