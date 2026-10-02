@@ -1,9 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { API_URL } from '../api';
 import { Task, TaskInput, TaskStatus } from '../models/task';
-
-const API_URL = 'http://localhost:3000/api';
 
 /** Cliente HTTP de la API REST de tareas (contrato en specs/001-gestor-tareas/plan.md). */
 @Injectable({ providedIn: 'root' })

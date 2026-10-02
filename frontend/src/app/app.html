@@ -1,6 +1,10 @@
 <header>
   <h1>TaskFlow</h1>
+  @if (auth.user(); as user) {
+    <span>{{ user.name }}</span>
+    <button type="button" data-action="logout" (click)="auth.logout()">Cerrar sesión</button>
+  }
 </header>
 <main>
-  <app-board />
+  <router-outlet />
 </main>
