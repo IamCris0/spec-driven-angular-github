@@ -38,16 +38,16 @@ Cada fase se entrega en su propia rama y Pull Request.
 
 ## Fase 4: Historias P2 y P3 (rama `feature/004-editar-filtrar`)
 
-- [ ] T018 [H4] Pruebas y endpoints `PUT` y `DELETE`
-- [ ] T019 [H4] Edición y eliminación con confirmación en la interfaz
-- [ ] T020 [H5] Prueba y filtro `?assignee=` en la API
-- [ ] T021 [H5] Selector de responsable en el tablero
+- [x] T018 [H4] Pruebas y endpoints `PUT` y `DELETE`
+- [x] T019 [H4] Edición y eliminación con confirmación en la interfaz
+- [x] T020 [H5] Prueba y filtro `?assignee=` en la API
+- [x] T021 [H5] Selector de responsable en el tablero
 
 ## Fase 5: Cierre (rama `docs/005-documentacion`)
 
-- [ ] T022 Actualizar README con instrucciones de ejecución y capturas
-- [ ] T023 Paso de deploy simulado en el pipeline (artefacto del build)
-- [ ] T024 Verificar todos los criterios de éxito de `spec.md`
+- [x] T022 Actualizar README con instrucciones de ejecución y capturas
+- [x] T023 Paso de deploy simulado en el pipeline (artefacto del build)
+- [x] T024 Verificar todos los criterios de éxito de `spec.md`
 
 ## Dependencias
 

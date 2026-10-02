@@ -86,7 +86,7 @@ describe('Board', () => {
   it('agrega la tarea nueva en Por hacer al guardar el formulario', async () => {
     await open([]);
 
-    const title = root.querySelector<HTMLInputElement>('#title')!;
+    const title = root.querySelector<HTMLInputElement>('[formcontrolname="title"]')!;
     title.value = 'Configurar CI';
     title.dispatchEvent(new Event('input'));
     root.querySelector('form')!.dispatchEvent(new Event('submit'));
@@ -104,7 +104,7 @@ describe('Board', () => {
   it('muestra el mensaje de validación que devuelve la API al crear', async () => {
     await open([]);
 
-    const title = root.querySelector<HTMLInputElement>('#title')!;
+    const title = root.querySelector<HTMLInputElement>('[formcontrolname="title"]')!;
     title.value = 'Tarea';
     title.dispatchEvent(new Event('input'));
     root.querySelector('form')!.dispatchEvent(new Event('submit'));
@@ -146,5 +146,201 @@ describe('Board', () => {
 
     expect(alert()).toBe('La tarea ya no existe');
     expect(titles('pendiente')).toEqual(['Mover']);
+  });
+
+  describe('editar y eliminar', () => {
+    const editButton = (status = 'pendiente') =>
+      column(status).querySelector<HTMLButtonElement>('button[data-action="edit"]')!;
+    const deleteButton = (status = 'pendiente') =>
+      column(status).querySelector<HTMLButtonElement>('button[data-action="delete"]')!;
+
+    beforeEach(async () => {
+      await open([makeTask({ id: 5, title: 'Original', assignee: 'Ana' })]);
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('reemplaza la tarjeta por un formulario con los datos de la tarea', async () => {
+      editButton().click();
+      await fixture.whenStable();
+
+      const form = column('pendiente').querySelector('form')!;
+      expect(form).not.toBeNull();
+      expect(form.querySelector<HTMLInputElement>('[formcontrolname="title"]')!.value).toBe(
+        'Original',
+      );
+      expect(column('pendiente').querySelector('.task-card')).toBeNull();
+    });
+
+    it('guarda el nuevo título y el tablero lo muestra', async () => {
+      editButton().click();
+      await fixture.whenStable();
+      const form = column('pendiente').querySelector('form')!;
+      const title = form.querySelector<HTMLInputElement>('[formcontrolname="title"]')!;
+      title.value = 'Título nuevo';
+      title.dispatchEvent(new Event('input'));
+      form.dispatchEvent(new Event('submit'));
+
+      const req = http.expectOne(`${API_URL}/tasks/5`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual({
+        title: 'Título nuevo',
+        priority: 'media',
+        assignee: 'Ana',
+      });
+      req.flush(makeTask({ id: 5, title: 'Título nuevo', assignee: 'Ana' }));
+      await fixture.whenStable();
+
+      expect(titles('pendiente')).toEqual(['Título nuevo']);
+      expect(column('pendiente').querySelector('form')).toBeNull();
+    });
+
+    it('cancelar la edición vuelve a mostrar la tarjeta sin llamar a la API', async () => {
+      editButton().click();
+      await fixture.whenStable();
+
+      column('pendiente').querySelector<HTMLButtonElement>('button[data-action="cancel"]')!.click();
+      await fixture.whenStable();
+
+      expect(titles('pendiente')).toEqual(['Original']);
+    });
+
+    it('avisa y quita la tarea si al editarla ya no existe', async () => {
+      editButton().click();
+      await fixture.whenStable();
+      column('pendiente').querySelector('form')!.dispatchEvent(new Event('submit'));
+      http
+        .expectOne(`${API_URL}/tasks/5`)
+        .flush({ error: 'Tarea no encontrada' }, { status: 404, statusText: 'Not Found' });
+      await fixture.whenStable();
+
+      expect(alert()).toBe('La tarea ya no existe');
+      expect(titles('pendiente')).toEqual([]);
+    });
+
+    it('pide confirmación y elimina la tarea', async () => {
+      const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      deleteButton().click();
+
+      expect(confirm).toHaveBeenCalledWith(expect.stringContaining('Original'));
+      const req = http.expectOne(`${API_URL}/tasks/5`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null, { status: 204, statusText: 'No Content' });
+      await fixture.whenStable();
+
+      expect(titles('pendiente')).toEqual([]);
+      expect(root.querySelector('.empty')?.textContent).toContain('No hay tareas todavía');
+    });
+
+    it('no elimina nada si el usuario no confirma', async () => {
+      vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+      deleteButton().click();
+      await fixture.whenStable();
+
+      expect(titles('pendiente')).toEqual(['Original']);
+    });
+
+    it('avisa y quita la tarea si al eliminarla ya no existe', async () => {
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+      deleteButton().click();
+      http
+        .expectOne(`${API_URL}/tasks/5`)
+        .flush({ error: 'Tarea no encontrada' }, { status: 404, statusText: 'Not Found' });
+      await fixture.whenStable();
+
+      expect(alert()).toBe('La tarea ya no existe');
+      expect(titles('pendiente')).toEqual([]);
+    });
+  });
+
+  describe('filtro por responsable', () => {
+    const select = () => root.querySelector<HTMLSelectElement>('select[data-filter="assignee"]')!;
+    const options = () => Array.from(select().options).map((option) => option.textContent?.trim());
+
+    async function choose(value: string): Promise<void> {
+      select().value = value;
+      select().dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+    }
+
+    beforeEach(async () => {
+      await open([
+        makeTask({ id: 1, title: 'De Ana', assignee: 'Ana' }),
+        makeTask({ id: 2, title: 'De Luis', assignee: 'Luis' }),
+        makeTask({ id: 3, title: 'Otra de Ana', assignee: 'Ana' }),
+        makeTask({ id: 4, title: 'Sin responsable' }),
+      ]);
+    });
+
+    it('ofrece Todos y cada responsable una sola vez', () => {
+      expect(options()).toEqual(['Todos', 'Ana', 'Luis']);
+    });
+
+    it('pide a la API solo las tareas del responsable elegido', async () => {
+      await choose('Ana');
+
+      const req = http.expectOne(`${API_URL}/tasks?assignee=Ana`);
+      req.flush([
+        makeTask({ id: 1, title: 'De Ana', assignee: 'Ana' }),
+        makeTask({ id: 3, title: 'Otra de Ana', assignee: 'Ana' }),
+      ]);
+      await fixture.whenStable();
+
+      expect(titles('pendiente')).toEqual(['De Ana', 'Otra de Ana']);
+      expect(options()).toEqual(['Todos', 'Ana', 'Luis']);
+    });
+
+    it('vuelve a pedir todas las tareas al elegir Todos', async () => {
+      await choose('Ana');
+      http.expectOne(`${API_URL}/tasks?assignee=Ana`).flush([]);
+      await fixture.whenStable();
+
+      await choose('');
+
+      http.expectOne(`${API_URL}/tasks`).flush([makeTask({ id: 2, title: 'De Luis' })]);
+      await fixture.whenStable();
+      expect(titles('pendiente')).toEqual(['De Luis']);
+    });
+
+    it('explica que no hay tareas para el responsable si el resultado es vacío', async () => {
+      await choose('Luis');
+      http.expectOne(`${API_URL}/tasks?assignee=Luis`).flush([]);
+      await fixture.whenStable();
+
+      expect(root.querySelector('.empty')?.textContent).toContain(
+        'No hay tareas para este responsable',
+      );
+    });
+
+    it('no muestra una tarea nueva que no pertenece al responsable filtrado', async () => {
+      await choose('Ana');
+      http
+        .expectOne(`${API_URL}/tasks?assignee=Ana`)
+        .flush([makeTask({ id: 1, title: 'De Ana', assignee: 'Ana' })]);
+      await fixture.whenStable();
+
+      const title = root.querySelector<HTMLInputElement>('[formcontrolname="title"]')!;
+      title.value = 'De Pedro';
+      title.dispatchEvent(new Event('input'));
+      const assignee = root.querySelector<HTMLInputElement>('[formcontrolname="assignee"]')!;
+      assignee.value = 'Pedro';
+      assignee.dispatchEvent(new Event('input'));
+      root.querySelector('form')!.dispatchEvent(new Event('submit'));
+      http
+        .expectOne(`${API_URL}/tasks`)
+        .flush(makeTask({ id: 9, title: 'De Pedro', assignee: 'Pedro' }), {
+          status: 201,
+          statusText: 'Created',
+        });
+      await fixture.whenStable();
+
+      expect(titles('pendiente')).toEqual(['De Ana']);
+      expect(options()).toEqual(['Todos', 'Ana', 'Luis', 'Pedro']);
+    });
   });
 });

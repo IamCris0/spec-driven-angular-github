@@ -48,3 +48,14 @@ button {
   color: #b42318;
   font-size: 0.875rem;
 }
+
+.buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.secondary {
+  background: #f6f8fa;
+  border: 1px solid #b6bec6;
+  color: inherit;
+}

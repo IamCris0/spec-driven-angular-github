@@ -1,11 +1,23 @@
 <app-task-form (saved)="create($event)" />
 
+<label class="filter">
+  Responsable
+  <select data-filter="assignee" #filter (change)="filterBy(filter.value)">
+    <option value="" [selected]="assignee() === ''">Todos</option>
+    @for (name of assignees(); track name) {
+      <option [value]="name" [selected]="name === assignee()">{{ name }}</option>
+    }
+  </select>
+</label>
+
 @if (error(); as message) {
   <p class="alert" role="alert">{{ message }}</p>
 }
 
 @if (loaded() && tasks().length === 0) {
-  <p class="empty">No hay tareas todavía</p>
+  <p class="empty">
+    {{ assignee() ? 'No hay tareas para este responsable' : 'No hay tareas todavía' }}
+  </p>
 }
 
 <div class="columns">
@@ -13,7 +25,20 @@
     <section [attr.data-status]="column.status">
       <h2>{{ column.label }}</h2>
       @for (task of column.tasks; track task.id) {
-        <app-task-card [task]="task" (move)="move($event)" />
+        @if (editingId() === task.id) {
+          <app-task-form
+            [task]="task"
+            (saved)="update(task.id, $event)"
+            (cancelled)="editingId.set(null)"
+          />
+        } @else {
+          <app-task-card
+            [task]="task"
+            (move)="move($event)"
+            (edit)="editingId.set($event)"
+            (remove)="remove($event)"
+          />
+        }
       }
     </section>
   }
