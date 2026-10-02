@@ -1,5 +1,7 @@
 const express = require('express');
 const { createAuth } = require('./auth');
+const { createCommentsRepository } = require('./comments.repository');
+const { createStatsRouter } = require('./stats.routes');
 const { createTasksRepository } = require('./tasks.repository');
 const { createTasksRouter } = require('./tasks.routes');
 const { createUsersRepository } = require('./users.repository');
@@ -63,7 +65,12 @@ function createApp(db, { jwtSecret, bcryptRounds = 10 } = {}) {
   app.use(cors);
   app.use(express.json());
   app.use('/api/auth', auth.router);
-  app.use('/api/tasks', auth.requireAuth, createTasksRouter(createTasksRepository(db)));
+  app.use(
+    '/api/tasks',
+    auth.requireAuth,
+    createTasksRouter(createTasksRepository(db), createCommentsRepository(db)),
+  );
+  app.use('/api/stats', auth.requireAuth, createStatsRouter(db));
   app.use(notFound);
   app.use(errorHandler);
 
