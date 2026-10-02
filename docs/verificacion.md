@@ -1,8 +1,8 @@
 # Verificación de la especificación (T024)
 
 Comprobación de cada requisito, caso borde y criterio de éxito de
-[`spec.md`](../specs/001-gestor-tareas/spec.md) contra el código de la rama `docs/005-documentacion`
-(Fases 1 a 5).
+[`spec.md`](../specs/001-gestor-tareas/spec.md) contra `main` después de fusionar las Fases 1 a 5
+(PR #4, commit `b8026e6`).
 
 **Fecha**: 2026-10-02
 
@@ -14,7 +14,8 @@ Comprobación de cada requisito, caso borde y criterio de éxito de
 | Pruebas del frontend | Vitest + jsdom (`*.spec.ts`) | 49 pruebas en verde |
 | Compilación | `ng build` | Sin errores ni avisos |
 | Punta a punta | API real + frontend compilado + Chromium sin interfaz | Todos los escenarios en verde (ver abajo) |
-| Pipeline | GitHub Actions en los PR #2 y #3 y en los push a `main` | En verde |
+| Pipeline | GitHub Actions en los PR #2, #3 y #4 y en los push a `main` | En verde |
+| Deploy simulado | Job `deploy` del push a `main` del PR #4 (run 37067714353) | En verde; artefacto `taskflow-frontend` de 66 KB |
 
 El recorrido de punta a punta probó: tablero vacío, validación del título, crear, mover entre columnas,
 recargar la página, editar, eliminar con confirmación, filtrar por responsable y la API apagada.
@@ -55,17 +56,17 @@ recargar la página, editar, eliminar con confirmación, filtrar por responsable
 |---|---|---|
 | CE-001 Crear una tarea en menos de 30 s | Solo el título es obligatorio y el formulario está siempre visible. No se cronometró con usuarios reales | Pendiente de medir con un usuario |
 | CE-002 El 100 % de los cambios de estado persisten al recargar | La API guarda en SQLite antes de responder; verificado en punta a punta con recarga | Cumple |
-| CE-003 Las historias P1 tienen pruebas automatizadas en GitHub Actions | Jobs `backend` y `frontend` en verde en el PR #3, que incluye las pruebas de H1, H2 y H3 | Cumple |
+| CE-003 Las historias P1 tienen pruebas automatizadas en GitHub Actions | Jobs `backend` y `frontend` en verde en los PR #3 y #4, que incluyen las pruebas de H1, H2 y H3 | Cumple |
 | CE-004 Nada llega a `main` sin PR aprobado y pipeline en verde | Ver abajo | **No cumple todavía** |
 
 ### CE-004 y Principio III de la constitución
 
-Estado del repositorio el 2026-10-02:
+Estado del repositorio el 2026-10-02, después de fusionar el PR #4:
 
 - `main` y `develop` **no tienen protección de ramas** configurada.
-- Los PR #2 y #3 se fusionaron en `main` **sin ninguna aprobación**.
+- Los PR #2, #3 y #4 se fusionaron en `main` **sin ninguna aprobación**.
 - Hubo un push directo a `main` (`8f5e156 Update .gitignore`).
-- Los PR #2 y #3 apuntaron a `main` en vez de a `develop`, así que `develop` quedó atrás.
+- Los PR #2, #3 y #4 apuntaron a `main` en vez de a `develop`, así que `develop` quedó atrás (sigue en el PR #1).
 
 Para cumplirlo, en **Settings → Branches → Add rule** para `main` y `develop` (ver
 [`flujo-de-trabajo.md`](flujo-de-trabajo.md#5-protección-de-ramas-configuración-en-github)):
