@@ -42,6 +42,12 @@ function createTasksRouter(repository) {
     res.json(repository.list({ assignee: filter }));
   });
 
+  router.get('/:id', (req, res) => {
+    const id = Number(req.params.id);
+    const task = Number.isInteger(id) ? repository.findById(id) : undefined;
+    return task ? res.json(task) : notFound(res);
+  });
+
   router.post('/', (req, res) => {
     const body = req.body ?? {};
     const error = validateTaskInput(body);
