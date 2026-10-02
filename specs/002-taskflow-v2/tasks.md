@@ -24,12 +24,12 @@ Cada fase se entrega en su propia rama y Pull Request. Dentro de cada historia: 
 
 ## Fase 8: Productividad (rama `feature/010-productividad`)
 
-- [ ] T035 [H9] Pruebas y `due_date` en la API (validación de fecha real)
-- [ ] T036 [H9] Fecha límite en el formulario, tarjeta "Vencida" y orden del tablero
-- [ ] T037 [H11] Pruebas y búsqueda `?q=` en la API; buscador en el tablero
-- [ ] T038 [H10] Arrastrar y soltar entre columnas con Angular CDK
-- [ ] T039 [H12] Pruebas y endpoints de comentarios; panel de comentarios en la tarjeta
-- [ ] T040 [H13] Pruebas y `GET /api/stats`; página de estadísticas
+- [x] T035 [H9] Pruebas y `due_date` en la API (validación de fecha real)
+- [x] T036 [H9] Fecha límite en el formulario, tarjeta "Vencida" y orden del tablero
+- [x] T037 [H11] Pruebas y búsqueda `?q=` en la API; buscador en el tablero
+- [x] T038 [H10] Arrastrar y soltar entre columnas con Angular CDK
+- [x] T039 [H12] Pruebas y endpoints de comentarios; panel de comentarios en la tarjeta
+- [x] T040 [H13] Pruebas y `GET /api/stats`; página de estadísticas
 
 ## Fase 9: Cierre (rama `docs/011-documentacion-v2`)
 
