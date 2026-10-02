@@ -11,6 +11,10 @@ const task: Task = {
   assignee: 'Ana',
   created_at: '2026-09-29T12:00:00.000Z',
   updated_at: '2026-09-29T12:00:00.000Z',
+  created_by: 1,
+  created_by_name: 'Ana Torres',
+  due_date: null,
+  comment_count: 0,
 };
 
 describe('TaskCard', () => {
