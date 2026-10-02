@@ -346,4 +346,24 @@ describe('API de tareas', () => {
       expect(res.body).toEqual([]);
     });
   });
+
+  describe('GET /api/tasks/:id', () => {
+    it('devuelve la tarea', async () => {
+      const created = await request(app)
+        .post('/api/tasks')
+        .send({ title: 'Buscar', assignee: 'Ana' });
+
+      const res = await request(app).get(`/api/tasks/${created.body.id}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(created.body);
+    });
+
+    it.each(['999', 'abc'])('responde 404 si la tarea %s no existe', async (id) => {
+      const res = await request(app).get(`/api/tasks/${id}`);
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: 'Tarea no encontrada' });
+    });
+  });
 });
