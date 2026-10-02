@@ -1,11 +1,11 @@
 const express = require('express');
 const request = require('supertest');
-const { createApp: buildApp, errorHandler } = require('../src/app');
-const { createDb } = require('../src/db');
+const { errorHandler } = require('../src/app');
+const { buildTestApp } = require('./helpers');
 
 const FRONTEND_ORIGIN = 'http://localhost:4200';
 
-const createApp = () => buildApp(createDb(':memory:'));
+const createApp = () => buildTestApp().app;
 
 describe('app: CORS', () => {
   it('responde la petición previa (preflight) del frontend', async () => {
@@ -20,6 +20,7 @@ describe('app: CORS', () => {
       expect.arrayContaining(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']),
     );
     expect(res.headers['access-control-allow-headers']).toMatch(/content-type/i);
+    expect(res.headers['access-control-allow-headers']).toMatch(/authorization/i);
   });
 
   it('incluye la cabecera de CORS en las respuestas 404', async () => {
