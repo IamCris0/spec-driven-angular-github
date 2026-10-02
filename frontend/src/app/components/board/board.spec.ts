@@ -1,7 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Task } from '../../models/task';
+import { By } from '@angular/platform-browser';
+import { Task, TaskStatus } from '../../models/task';
 import { Board } from './board';
 
 const API_URL = 'http://localhost:3000/api';
@@ -345,6 +347,136 @@ describe('Board', () => {
 
       expect(titles('pendiente')).toEqual(['De Ana']);
       expect(options()).toEqual(['Todos', 'Ana', 'Luis', 'Pedro']);
+    });
+  });
+
+  describe('búsqueda (H11)', () => {
+    const search = () => root.querySelector<HTMLInputElement>('input[data-search]')!;
+
+    afterEach(() => vi.useRealTimers());
+
+    it('espera 300 ms tras escribir y pide a la API solo lo que coincide', async () => {
+      await open([
+        makeTask({ id: 1, title: 'Configurar pipeline' }),
+        makeTask({ id: 2, title: 'Otra' }),
+      ]);
+      vi.useFakeTimers();
+
+      search().value = 'pipe';
+      search().dispatchEvent(new Event('input'));
+      search().value = 'pipeline';
+      search().dispatchEvent(new Event('input'));
+      vi.advanceTimersByTime(299);
+      http.expectNone(`${API_URL}/tasks?q=pipeline`);
+      vi.advanceTimersByTime(1);
+
+      http
+        .expectOne(`${API_URL}/tasks?q=pipeline`)
+        .flush([makeTask({ id: 1, title: 'Configurar pipeline' })]);
+      vi.useRealTimers();
+      await fixture.whenStable();
+
+      expect(titles('pendiente')).toEqual(['Configurar pipeline']);
+    });
+
+    it('explica cuando la búsqueda no encuentra tareas', async () => {
+      await open([makeTask({ id: 1, title: 'Otra' })]);
+      vi.useFakeTimers();
+
+      search().value = 'nada';
+      search().dispatchEvent(new Event('input'));
+      vi.advanceTimersByTime(300);
+      http.expectOne(`${API_URL}/tasks?q=nada`).flush([]);
+      vi.useRealTimers();
+      await fixture.whenStable();
+
+      expect(root.querySelector('.empty')?.textContent).toContain(
+        'Ninguna tarea coincide con la búsqueda',
+      );
+    });
+  });
+
+  describe('orden (H9)', () => {
+    it('ordena cada columna por prioridad o por fecha límite', async () => {
+      await open([
+        makeTask({ id: 1, title: 'Baja sin fecha', priority: 'baja' }),
+        makeTask({ id: 2, title: 'Alta tarde', priority: 'alta', due_date: '2099-12-01' }),
+        makeTask({ id: 3, title: 'Media pronto', priority: 'media', due_date: '2099-01-01' }),
+      ]);
+      const sort = root.querySelector<HTMLSelectElement>('select[data-sort]')!;
+
+      sort.value = 'priority';
+      sort.dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+      expect(titles('pendiente')).toEqual(['Alta tarde', 'Media pronto', 'Baja sin fecha']);
+
+      sort.value = 'due';
+      sort.dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+      expect(titles('pendiente')).toEqual(['Media pronto', 'Alta tarde', 'Baja sin fecha']);
+    });
+  });
+
+  describe('arrastrar y soltar (H10)', () => {
+    function drop(task: Task, from: number, to: number): void {
+      const lists = fixture.debugElement.queryAll(By.directive(CdkDropList));
+      const list = (index: number) => lists[index].injector.get(CdkDropList);
+      const event = {
+        previousContainer: list(from),
+        container: list(to),
+        item: { data: task },
+      } as unknown as CdkDragDrop<TaskStatus, TaskStatus, Task>;
+      lists[to].triggerEventHandler('cdkDropListDropped', event);
+    }
+
+    it('soltar en otra columna cambia el estado con la API', async () => {
+      const task = makeTask({ id: 5, title: 'Arrastrada' });
+      await open([task]);
+
+      drop(task, 0, 1);
+
+      const req = http.expectOne(`${API_URL}/tasks/5/status`);
+      expect(req.request.body).toEqual({ status: 'en_progreso' });
+      req.flush({ ...task, status: 'en_progreso' });
+      await fixture.whenStable();
+
+      expect(titles('en_progreso')).toEqual(['Arrastrada']);
+    });
+
+    it('soltar en la misma columna no llama a la API', async () => {
+      const task = makeTask({ id: 5, title: 'Quieta' });
+      await open([task]);
+
+      drop(task, 0, 0);
+
+      http.expectNone(`${API_URL}/tasks/5/status`);
+    });
+  });
+
+  describe('comentarios', () => {
+    it('actualiza el contador de la tarjeta al agregar un comentario', async () => {
+      await open([makeTask({ id: 5, title: 'Comentada', comment_count: 1 })]);
+      const toggle = () => root.querySelector<HTMLButtonElement>('button[data-action="comments"]')!;
+
+      toggle().click();
+      await fixture.whenStable();
+      http.expectOne(`${API_URL}/tasks/5/comments`).flush([]);
+      await fixture.whenStable();
+      const textarea = root.querySelector('app-task-comments textarea') as HTMLTextAreaElement;
+      textarea.value = 'Nuevo';
+      textarea.dispatchEvent(new Event('input'));
+      root.querySelector('app-task-comments form')!.dispatchEvent(new Event('submit'));
+      http.expectOne(`${API_URL}/tasks/5/comments`).flush({
+        id: 9,
+        task_id: 5,
+        user_id: 1,
+        user_name: 'Ana',
+        body: 'Nuevo',
+        created_at: '2026-10-03T10:00:00.000Z',
+      });
+      await fixture.whenStable();
+
+      expect(toggle().textContent).toContain('2');
     });
   });
 });
