@@ -33,7 +33,7 @@ Cada fase se entrega en su propia rama y Pull Request. Dentro de cada historia: 
 
 ## Fase 9: Cierre (rama `docs/011-documentacion-v2`)
 
-- [ ] T041 Actualizar README, capturas y `docs/verificacion.md` con la versión 2
+- [x] T041 Actualizar README, capturas y `docs/verificacion.md` con la versión 2
 
 ## Dependencias
 
