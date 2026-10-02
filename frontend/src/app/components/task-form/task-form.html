@@ -52,6 +52,11 @@
     </div>
   </div>
 
+  <div>
+    <label class="label" [for]="'due-' + formId">Fecha límite</label>
+    <input class="input" [id]="'due-' + formId" type="date" formControlName="due_date" />
+  </div>
+
   <div class="flex gap-2">
     <button type="submit" class="btn btn-primary flex-1">
       {{ task() ? 'Guardar cambios' : 'Crear tarea' }}

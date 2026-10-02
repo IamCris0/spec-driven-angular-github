@@ -15,11 +15,20 @@
         </p>
       </div>
 
-      <label class="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
-        Responsable
+      <div class="flex flex-wrap items-center gap-2">
+        <input
+          type="search"
+          class="input w-full py-1.5 sm:w-56"
+          data-search
+          placeholder="Buscar tareas…"
+          aria-label="Buscar tareas"
+          #searchBox
+          (input)="search(searchBox.value)"
+        />
         <select
           class="input w-auto py-1.5"
           data-filter="assignee"
+          aria-label="Responsable"
           #filter
           (change)="filterBy(filter.value)"
         >
@@ -28,7 +37,18 @@
             <option [value]="name" [selected]="name === assignee()">{{ name }}</option>
           }
         </select>
-      </label>
+        <select
+          class="input w-auto py-1.5"
+          data-sort
+          aria-label="Ordenar"
+          #sort
+          (change)="sortBy(sort.value)"
+        >
+          <option value="created">Orden de creación</option>
+          <option value="priority">Prioridad</option>
+          <option value="due">Fecha límite</option>
+        </select>
+      </div>
     </div>
 
     @if (error(); as message) {
@@ -39,13 +59,16 @@
       <p
         class="empty rounded-2xl border-2 border-dashed border-slate-300 px-4 py-10 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400"
       >
-        {{ assignee() ? 'No hay tareas para este responsable' : 'No hay tareas todavía' }}
+        {{ emptyMessage() }}
       </p>
     }
 
-    <div class="grid gap-4 md:grid-cols-3">
+    <div class="grid gap-4 md:grid-cols-3" cdkDropListGroup>
       @for (column of columns(); track column.status) {
         <section
+          cdkDropList
+          [cdkDropListData]="column.status"
+          (cdkDropListDropped)="drop($event)"
           [attr.data-status]="column.status"
           class="flex min-h-40 flex-col gap-3 rounded-2xl bg-slate-200/60 p-3 dark:bg-slate-900/60"
         >
@@ -58,20 +81,23 @@
             >
           </header>
           @for (task of column.tasks; track task.id) {
-            @if (editingId() === task.id) {
-              <app-task-form
-                [task]="task"
-                (saved)="update(task.id, $event)"
-                (cancelled)="editingId.set(null)"
-              />
-            } @else {
-              <app-task-card
-                [task]="task"
-                (move)="move($event)"
-                (edit)="editingId.set($event)"
-                (remove)="remove($event)"
-              />
-            }
+            <div cdkDrag [cdkDragData]="task" [cdkDragDisabled]="editingId() === task.id">
+              @if (editingId() === task.id) {
+                <app-task-form
+                  [task]="task"
+                  (saved)="update(task.id, $event)"
+                  (cancelled)="editingId.set(null)"
+                />
+              } @else {
+                <app-task-card
+                  [task]="task"
+                  (move)="move($event)"
+                  (edit)="editingId.set($event)"
+                  (remove)="remove($event)"
+                  (commented)="commented($event)"
+                />
+              }
+            </div>
           }
         </section>
       }
