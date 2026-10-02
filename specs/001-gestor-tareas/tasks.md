@@ -45,9 +45,9 @@ Cada fase se entrega en su propia rama y Pull Request.
 
 ## Fase 5: Cierre (rama `docs/005-documentacion`)
 
-- [ ] T022 Actualizar README con instrucciones de ejecución y capturas
-- [ ] T023 Paso de deploy simulado en el pipeline (artefacto del build)
-- [ ] T024 Verificar todos los criterios de éxito de `spec.md`
+- [x] T022 Actualizar README con instrucciones de ejecución y capturas
+- [x] T023 Paso de deploy simulado en el pipeline (artefacto del build)
+- [x] T024 Verificar todos los criterios de éxito de `spec.md`
 
 ## Dependencias
 
