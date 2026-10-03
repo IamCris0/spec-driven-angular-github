@@ -60,6 +60,7 @@ function createTasksRouter(repository) {
       description: blankToNull(body.description),
       priority: body.priority ?? null,
       assignee: blankToNull(body.assignee),
+      createdBy: req.user.id,
     });
     res.status(201).json(task);
   });

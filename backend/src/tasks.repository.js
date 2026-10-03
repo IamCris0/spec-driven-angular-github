@@ -1,13 +1,17 @@
 function createTasksRepository(db) {
+  // Cada tarea se devuelve con el nombre de quien la creó.
+  const SELECT_TASKS = `SELECT tasks.*, users.name AS created_by_name
+    FROM tasks LEFT JOIN users ON users.id = tasks.created_by`;
+
   const insert = db.prepare(
-    `INSERT INTO tasks (title, description, priority, assignee)
-     VALUES (@title, @description, COALESCE(@priority, 'media'), @assignee)`,
+    `INSERT INTO tasks (title, description, priority, assignee, created_by)
+     VALUES (@title, @description, COALESCE(@priority, 'media'), @assignee, @createdBy)`,
   );
-  const selectAll = db.prepare('SELECT * FROM tasks ORDER BY id');
+  const selectAll = db.prepare(`${SELECT_TASKS} ORDER BY tasks.id`);
   const selectByAssignee = db.prepare(
-    'SELECT * FROM tasks WHERE assignee = ? COLLATE NOCASE ORDER BY id',
+    `${SELECT_TASKS} WHERE tasks.assignee = ? COLLATE NOCASE ORDER BY tasks.id`,
   );
-  const selectById = db.prepare('SELECT * FROM tasks WHERE id = ?');
+  const selectById = db.prepare(`${SELECT_TASKS} WHERE tasks.id = ?`);
   const updateStatus = db.prepare(
     `UPDATE tasks SET status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?`,
   );
@@ -21,8 +25,8 @@ function createTasksRepository(db) {
   const deleteTask = db.prepare('DELETE FROM tasks WHERE id = ?');
 
   return {
-    create({ title, description = null, priority = null, assignee = null }) {
-      const { lastInsertRowid } = insert.run({ title, description, priority, assignee });
+    create({ title, description = null, priority = null, assignee = null, createdBy = null }) {
+      const { lastInsertRowid } = insert.run({ title, description, priority, assignee, createdBy });
       return selectById.get(lastInsertRowid);
     },
 

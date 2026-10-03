@@ -8,13 +8,13 @@ Cada fase se entrega en su propia rama y Pull Request. Dentro de cada historia: 
 
 ## Fase 6: Autenticación (rama `feature/008-autenticacion`)
 
-- [ ] T025 Migraciones con `PRAGMA user_version`: tabla `users`, `tasks.created_by`, `tasks.due_date`, tabla `comments`
-- [ ] T026 [H6] Pruebas y endpoint `POST /api/auth/register` (bcrypt, correo único, validaciones)
-- [ ] T027 [H7] Pruebas y endpoint `POST /api/auth/login`, con límite de intentos
-- [ ] T028 [H7] Pruebas y middleware `requireAuth` + `GET /api/auth/me`; proteger `/api/tasks`
-- [ ] T029 [H8] Pruebas y `created_by` / `created_by_name` en las tareas
-- [ ] T030 [H7] Frontend: `AuthService`, interceptor y `authGuard` con sus pruebas
-- [ ] T031 [H6] [H7] Frontend: pantallas de inicio de sesión y registro, rutas y cierre de sesión
+- [x] T025 Migraciones con `PRAGMA user_version`: tabla `users`, `tasks.created_by`, `tasks.due_date`, tabla `comments`
+- [x] T026 [H6] Pruebas y endpoint `POST /api/auth/register` (bcrypt, correo único, validaciones)
+- [x] T027 [H7] Pruebas y endpoint `POST /api/auth/login`, con límite de intentos
+- [x] T028 [H7] Pruebas y middleware `requireAuth` + `GET /api/auth/me`; proteger `/api/tasks`
+- [x] T029 [H8] Pruebas y `created_by` / `created_by_name` en las tareas
+- [x] T030 [H7] Frontend: `AuthService`, interceptor y `authGuard` con sus pruebas
+- [x] T031 [H6] [H7] Frontend: pantallas de inicio de sesión y registro, rutas y cierre de sesión
 
 ## Fase 7: Diseño (rama `feature/009-diseno-tailwind`)
 

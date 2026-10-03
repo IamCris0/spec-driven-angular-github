@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const Database = require('better-sqlite3');
 const { createDb, DEFAULT_DB_PATH } = require('../src/db');
 
 const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
@@ -36,6 +37,8 @@ describe('db: tabla tasks', () => {
       'assignee',
       'created_at',
       'updated_at',
+      'created_by',
+      'due_date',
     ]);
   });
 
@@ -123,5 +126,123 @@ describe('db: archivo de base de datos', () => {
     const backendRoot = path.resolve(__dirname, '..');
 
     expect(path.relative(backendRoot, DEFAULT_DB_PATH)).toBe(path.join('data', 'taskflow.db'));
+  });
+});
+
+describe('db: migraciones de la versión 2', () => {
+  let db;
+
+  beforeEach(() => {
+    db = createDb(':memory:');
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  const insertUser = (name, email) =>
+    db
+      .prepare('INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)')
+      .run(name, email, 'hash').lastInsertRowid;
+
+  it('deja la base en la versión 2 con integridad referencial activa', () => {
+    expect(db.pragma('user_version', { simple: true })).toBe(2);
+    expect(db.pragma('foreign_keys', { simple: true })).toBe(1);
+  });
+
+  it('crea la tabla users con un correo único sin distinguir mayúsculas', () => {
+    const columns = db.pragma('table_info(users)').map((column) => column.name);
+    expect(columns).toEqual(['id', 'name', 'email', 'password_hash', 'created_at']);
+
+    insertUser('Ana', 'ana@taskflow.ec');
+    expect(() => insertUser('Otra Ana', 'ANA@taskflow.ec')).toThrow(/UNIQUE constraint failed/);
+  });
+
+  it('crea la tabla comments', () => {
+    const columns = db.pragma('table_info(comments)').map((column) => column.name);
+
+    expect(columns).toEqual(['id', 'task_id', 'user_id', 'body', 'created_at']);
+  });
+
+  it('borra los comentarios al eliminar su tarea', () => {
+    const userId = insertUser('Ana', 'ana@taskflow.ec');
+    const taskId = insertTask(db, { title: 'Con comentarios', created_by: userId }).lastInsertRowid;
+    db.prepare('INSERT INTO comments (task_id, user_id, body) VALUES (?, ?, ?)').run(
+      taskId,
+      userId,
+      'Hola',
+    );
+
+    db.prepare('DELETE FROM tasks WHERE id = ?').run(taskId);
+
+    expect(db.prepare('SELECT COUNT(*) AS n FROM comments').get().n).toBe(0);
+  });
+
+  it('conserva la tarea, sin autor, si se elimina el usuario que la creó', () => {
+    const userId = insertUser('Ana', 'ana@taskflow.ec');
+    const taskId = insertTask(db, { title: 'Huérfana', created_by: userId }).lastInsertRowid;
+
+    db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+
+    expect(db.prepare('SELECT created_by FROM tasks WHERE id = ?').get(taskId)).toEqual({
+      created_by: null,
+    });
+  });
+
+  it.each(['2026-13', '30/09/2026', 'mañana'])(
+    'rechaza la fecha límite con formato "%s"',
+    (due) => {
+      expect(() => insertTask(db, { title: 'Tarea', due_date: due })).toThrow(/constraint failed/i);
+    },
+  );
+
+  it('rechaza un comentario vacío o de más de 500 caracteres', () => {
+    const userId = insertUser('Ana', 'ana@taskflow.ec');
+    const taskId = insertTask(db, { title: 'Tarea' }).lastInsertRowid;
+    const insert = db.prepare('INSERT INTO comments (task_id, user_id, body) VALUES (?, ?, ?)');
+
+    expect(() => insert.run(taskId, userId, '')).toThrow(/constraint failed/i);
+    expect(() => insert.run(taskId, userId, 'a'.repeat(501))).toThrow(/constraint failed/i);
+  });
+});
+
+describe('db: actualización de una base de la versión 1', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'taskflow-v1-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('agrega las tablas y columnas nuevas y conserva las tareas existentes', () => {
+    const file = path.join(dir, 'taskflow.db');
+    const v1 = new Database(file);
+    v1.exec(`
+      CREATE TABLE tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL CHECK (length(title) BETWEEN 1 AND 120),
+        description TEXT,
+        status TEXT NOT NULL DEFAULT 'pendiente',
+        priority TEXT NOT NULL DEFAULT 'media',
+        assignee TEXT,
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+        updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+      );
+      INSERT INTO tasks (title, assignee) VALUES ('Tarea de la v1', 'Ana');
+    `);
+    v1.close();
+
+    const db = createDb(file);
+    const tasks = db.prepare('SELECT title, assignee, created_by, due_date FROM tasks').all();
+    const version = db.pragma('user_version', { simple: true });
+    db.close();
+
+    expect(tasks).toEqual([
+      { title: 'Tarea de la v1', assignee: 'Ana', created_by: null, due_date: null },
+    ]);
+    expect(version).toBe(2);
   });
 });
