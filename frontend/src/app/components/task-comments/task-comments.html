@@ -1,0 +1,39 @@
+<div class="mt-3 space-y-3 border-t border-slate-100 pt-3 dark:border-slate-800">
+  @if (error(); as message) {
+    <p class="alert-error py-2" role="alert">{{ message }}</p>
+  }
+
+  @if (loaded() && comments().length === 0) {
+    <p class="text-xs text-slate-500 dark:text-slate-400">Sin comentarios todavía.</p>
+  }
+
+  <ul class="space-y-2">
+    @for (comment of comments(); track comment.id) {
+      <li data-comment class="rounded-lg bg-slate-50 px-3 py-2 text-sm dark:bg-slate-800/60">
+        <div
+          class="flex items-baseline justify-between gap-2 text-xs text-slate-500 dark:text-slate-400"
+        >
+          <span class="font-semibold text-slate-700 dark:text-slate-200">{{
+            comment.user_name
+          }}</span>
+          <time [attr.datetime]="comment.created_at">{{ when(comment.created_at) }}</time>
+        </div>
+        <p class="mt-0.5 break-words whitespace-pre-line">{{ comment.body }}</p>
+      </li>
+    }
+  </ul>
+
+  <form class="flex flex-col gap-2" (submit)="$event.preventDefault(); send()">
+    <textarea
+      class="input resize-y py-1.5"
+      rows="2"
+      maxlength="500"
+      placeholder="Escribe un comentario"
+      aria-label="Nuevo comentario"
+      [formControl]="body"
+    ></textarea>
+    <button type="submit" class="btn btn-primary self-end px-3 py-1.5" [disabled]="sending()">
+      Comentar
+    </button>
+  </form>
+</div>

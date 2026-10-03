@@ -1,45 +1,106 @@
-<app-task-form (saved)="create($event)" />
+<div class="grid items-start gap-6 lg:grid-cols-[20rem_1fr]">
+  <aside class="space-y-3 lg:sticky lg:top-22">
+    <h2 class="text-sm font-semibold tracking-wide text-slate-500 uppercase dark:text-slate-400">
+      Nueva tarea
+    </h2>
+    <app-task-form (saved)="create($event)" />
+  </aside>
 
-<label class="filter">
-  Responsable
-  <select data-filter="assignee" #filter (change)="filterBy(filter.value)">
-    <option value="" [selected]="assignee() === ''">Todos</option>
-    @for (name of assignees(); track name) {
-      <option [value]="name" [selected]="name === assignee()">{{ name }}</option>
+  <div class="min-w-0 space-y-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="text-2xl font-bold tracking-tight">Tablero</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          {{ tasks().length }} {{ tasks().length === 1 ? 'tarea' : 'tareas' }}
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <input
+          type="search"
+          class="input w-full py-1.5 sm:w-56"
+          data-search
+          placeholder="Buscar tareas…"
+          aria-label="Buscar tareas"
+          #searchBox
+          (input)="search(searchBox.value)"
+        />
+        <select
+          class="input w-auto py-1.5"
+          data-filter="assignee"
+          aria-label="Responsable"
+          #filter
+          (change)="filterBy(filter.value)"
+        >
+          <option value="" [selected]="assignee() === ''">Todos</option>
+          @for (name of assignees(); track name) {
+            <option [value]="name" [selected]="name === assignee()">{{ name }}</option>
+          }
+        </select>
+        <select
+          class="input w-auto py-1.5"
+          data-sort
+          aria-label="Ordenar"
+          #sort
+          (change)="sortBy(sort.value)"
+        >
+          <option value="created">Orden de creación</option>
+          <option value="priority">Prioridad</option>
+          <option value="due">Fecha límite</option>
+        </select>
+      </div>
+    </div>
+
+    @if (error(); as message) {
+      <p class="alert-error" role="alert">{{ message }}</p>
     }
-  </select>
-</label>
 
-@if (error(); as message) {
-  <p class="alert" role="alert">{{ message }}</p>
-}
+    @if (loaded() && tasks().length === 0) {
+      <p
+        class="empty rounded-2xl border-2 border-dashed border-slate-300 px-4 py-10 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400"
+      >
+        {{ emptyMessage() }}
+      </p>
+    }
 
-@if (loaded() && tasks().length === 0) {
-  <p class="empty">
-    {{ assignee() ? 'No hay tareas para este responsable' : 'No hay tareas todavía' }}
-  </p>
-}
-
-<div class="columns">
-  @for (column of columns(); track column.status) {
-    <section [attr.data-status]="column.status">
-      <h2>{{ column.label }}</h2>
-      @for (task of column.tasks; track task.id) {
-        @if (editingId() === task.id) {
-          <app-task-form
-            [task]="task"
-            (saved)="update(task.id, $event)"
-            (cancelled)="editingId.set(null)"
-          />
-        } @else {
-          <app-task-card
-            [task]="task"
-            (move)="move($event)"
-            (edit)="editingId.set($event)"
-            (remove)="remove($event)"
-          />
-        }
+    <div class="grid gap-4 md:grid-cols-3" cdkDropListGroup>
+      @for (column of columns(); track column.status) {
+        <section
+          cdkDropList
+          [cdkDropListData]="column.status"
+          (cdkDropListDropped)="drop($event)"
+          [attr.data-status]="column.status"
+          class="flex min-h-40 flex-col gap-3 rounded-2xl bg-slate-200/60 p-3 dark:bg-slate-900/60"
+        >
+          <header class="flex items-center gap-2 px-1">
+            <span class="size-2.5 rounded-full" [class]="column.dot" aria-hidden="true"></span>
+            <h2 class="font-semibold">{{ column.label }}</h2>
+            <span
+              class="ml-auto rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+              >{{ column.tasks.length }}</span
+            >
+          </header>
+          @for (task of column.tasks; track task.id) {
+            <div cdkDrag [cdkDragData]="task" [cdkDragDisabled]="editingId() === task.id">
+              @if (editingId() === task.id) {
+                <app-task-form
+                  [task]="task"
+                  (saved)="update(task.id, $event)"
+                  (cancelled)="editingId.set(null)"
+                />
+              } @else {
+                <app-task-card
+                  [task]="task"
+                  (move)="move($event)"
+                  (edit)="editingId.set($event)"
+                  (remove)="remove($event)"
+                  (commented)="commented($event)"
+                />
+              }
+            </div>
+          }
+        </section>
       }
-    </section>
-  }
+    </div>
+  </div>
 </div>

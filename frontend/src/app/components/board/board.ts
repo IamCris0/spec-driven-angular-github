@@ -1,6 +1,15 @@
+import { CdkDrag, CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
-import { STATUS_LABELS, TASK_STATUSES, Task, TaskInput, TaskStatus } from '../../models/task';
+import {
+  STATUS_LABELS,
+  TASK_STATUSES,
+  Task,
+  TaskInput,
+  TaskOrder,
+  TaskStatus,
+  sortTasks,
+} from '../../models/task';
 import { TaskService } from '../../services/task.service';
 import { TaskCard } from '../task-card/task-card';
 import { TaskForm } from '../task-form/task-form';
@@ -17,15 +26,23 @@ function errorMessage(error: HttpErrorResponse, notFound: string): string {
 
 const TASK_GONE = 'La tarea ya no existe';
 
+// Mismos colores por estado que la página de estadísticas (paleta validada para daltonismo).
+const COLUMN_DOTS: Record<TaskStatus, string> = {
+  pendiente: 'bg-indigo-500',
+  en_progreso: 'bg-amber-500 dark:bg-orange-600',
+  hecha: 'bg-emerald-600',
+};
+
+const SEARCH_DELAY_MS = 300;
+
 function sortedNames(names: Iterable<string>): string[] {
   return [...new Set(names)].sort((a, b) => a.localeCompare(b));
 }
 
 @Component({
   selector: 'app-board',
-  imports: [TaskForm, TaskCard],
+  imports: [TaskForm, TaskCard, CdkDropListGroup, CdkDropList, CdkDrag],
   templateUrl: './board.html',
-  styleUrl: './board.css',
 })
 export class Board {
   private readonly taskService = inject(TaskService);
@@ -38,17 +55,60 @@ export class Board {
   protected readonly assignee = signal('');
   /** Responsables conocidos, para que el selector no pierda opciones al filtrar. */
   protected readonly assignees = signal<string[]>([]);
+  /** Texto buscado en título y descripción (H11). */
+  protected readonly query = signal('');
+  protected readonly order = signal<TaskOrder>('created');
+  private searchTimer: ReturnType<typeof setTimeout> | undefined;
 
   protected readonly columns = computed(() =>
     TASK_STATUSES.map((status) => ({
       status,
       label: STATUS_LABELS[status],
-      tasks: this.tasks().filter((task) => task.status === status),
+      dot: COLUMN_DOTS[status],
+      tasks: sortTasks(
+        this.tasks().filter((task) => task.status === status),
+        this.order(),
+      ),
     })),
   );
 
   constructor() {
     this.load();
+  }
+
+  protected emptyMessage(): string {
+    if (this.query()) {
+      return 'Ninguna tarea coincide con la búsqueda';
+    }
+    return this.assignee() ? 'No hay tareas para este responsable' : 'No hay tareas todavía';
+  }
+
+  /** Espera a que el usuario deje de escribir antes de consultar la API. */
+  protected search(text: string): void {
+    clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => {
+      this.query.set(text.trim());
+      this.load();
+    }, SEARCH_DELAY_MS);
+  }
+
+  protected sortBy(order: string): void {
+    this.order.set(order as TaskOrder);
+  }
+
+  /** Soltar una tarjeta en otra columna cambia su estado (H10). */
+  protected drop(event: CdkDragDrop<TaskStatus, TaskStatus, Task>): void {
+    if (event.previousContainer !== event.container) {
+      this.move({ id: event.item.data.id, status: event.container.data });
+    }
+  }
+
+  protected commented(id: number): void {
+    this.tasks.update((tasks) =>
+      tasks.map((task) =>
+        task.id === id ? { ...task, comment_count: task.comment_count + 1 } : task,
+      ),
+    );
   }
 
   protected filterBy(assignee: string): void {
@@ -120,7 +180,7 @@ export class Board {
 
   private load(): void {
     const assignee = this.assignee();
-    this.taskService.list(assignee || undefined).subscribe({
+    this.taskService.list(assignee || undefined, this.query()).subscribe({
       next: (tasks) => {
         this.tasks.set(tasks);
         this.loaded.set(true);
@@ -135,10 +195,15 @@ export class Board {
     });
   }
 
-  /** Agrega la tarea al tablero solo si cumple el filtro de responsable activo. */
+  /** Agrega la tarea al tablero solo si cumple el filtro de responsable y la búsqueda activos. */
   private show(task: Task): void {
-    const filter = this.assignee().toLowerCase();
-    if (!filter || task.assignee?.toLowerCase() === filter) {
+    const assignee = this.assignee().toLowerCase();
+    const query = this.query().toLowerCase();
+    const text = `${task.title} ${task.description ?? ''}`.toLowerCase();
+    if (
+      (!assignee || task.assignee?.toLowerCase() === assignee) &&
+      (!query || text.includes(query))
+    ) {
       this.tasks.update((tasks) => [...tasks, task]);
     }
   }

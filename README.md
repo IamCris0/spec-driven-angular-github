@@ -8,6 +8,17 @@ El sistema de ejemplo, **TaskFlow**, es un gestor de tareas con tablero Kanban h
 **Node.js/Express** y base de datos **SQLite**, desarrollado con **Spec Driven Development** usando la estructura
 de **GitHub Spec Kit**.
 
+## Funcionalidades
+
+| Versión | Qué incluye | Especificación |
+|---|---|---|
+| v1 | Tablero Kanban con tres columnas, crear, editar, eliminar, mover entre estados y filtrar por responsable | [`001-gestor-tareas`](specs/001-gestor-tareas/spec.md) |
+| v2 | Cuentas de usuario con inicio de sesión (JWT), autor de cada tarea, fecha límite y tareas vencidas, búsqueda, orden, arrastrar y soltar, comentarios, estadísticas, diseño con Tailwind CSS, modo oscuro y versión móvil | [`002-taskflow-v2`](specs/002-taskflow-v2/spec.md) |
+
+**Seguridad**: contraseñas guardadas solo como hash bcrypt, tokens JWT que expiran en 8 horas, toda la API de
+tareas y estadísticas exige sesión, el inicio de sesión no revela si el correo existe y se bloquea 15 minutos tras
+5 intentos fallidos. Detalle en el [plan de la v2](specs/002-taskflow-v2/plan.md#seguridad).
+
 ## Cómo se resuelve cada problema de la empresa
 
 | Problema | Solución aplicada en este repositorio |
@@ -20,17 +31,15 @@ de **GitHub Spec Kit**.
 
 ## Capturas
 
-| Tablero Kanban | Validación del formulario |
+![Tablero con tareas en las tres columnas, fechas límite y una tarea vencida](docs/capturas/tablero.png)
+
+| Modo oscuro | Comentarios de una tarea |
 |---|---|
-| ![Tablero con tareas en las tres columnas](docs/capturas/tablero.png) | ![Mensaje "El título es obligatorio"](docs/capturas/validacion.png) |
+| ![Tablero en modo oscuro](docs/capturas/tablero-oscuro.png) | ![Panel de comentarios desplegado en una tarjeta](docs/capturas/comentarios.png) |
 
-| Edición de una tarea | Filtro por responsable |
-|---|---|
-| ![Formulario de edición dentro de la columna](docs/capturas/edicion.png) | ![Tablero filtrado por Ana](docs/capturas/filtro.png) |
-
-Si la API no está disponible, la interfaz lo avisa:
-
-![Aviso "No se pudo conectar con el servidor"](docs/capturas/sin-conexion.png)
+| Estadísticas | Inicio de sesión | Móvil |
+|---|---|---|
+| ![Totales, tareas por estado y avance por responsable](docs/capturas/estadisticas.png) | ![Pantalla de inicio de sesión](docs/capturas/login.png) | ![Tablero en una pantalla de 375 px](docs/capturas/movil.png) |
 
 ## Requisitos
 
@@ -62,41 +71,68 @@ cd frontend
 npx ng serve
 ```
 
-La primera vez la API crea la base de datos en `backend/data/taskflow.db` (Git la ignora). Para empezar con el
-tablero vacío, detén la API y borra ese archivo.
+Abre http://localhost:4200, entra en **Regístrate** y crea tu cuenta: el tablero solo se ve con sesión iniciada.
+
+La primera vez la API crea la base de datos en `backend/data/taskflow.db` (Git la ignora). Si ya tenías una base
+de la v1, se actualiza sola al arrancar y conserva las tareas. Para empezar de cero, detén la API y borra ese
+archivo.
+
+### Clave de los tokens (`JWT_SECRET`)
+
+Sin `JWT_SECRET`, la API usa una clave aleatoria en cada arranque: funciona, pero las sesiones se cierran al
+reiniciar la API y la consola lo avisa. Para conservarlas, define la variable antes de `npm start`:
+
+```bash
+# PowerShell
+$env:JWT_SECRET = "una-clave-larga-y-secreta"
+# Git Bash, macOS o Linux
+export JWT_SECRET="una-clave-larga-y-secreta"
+```
+
+Con `NODE_ENV=production` la API no arranca sin `JWT_SECRET`. Nunca subas la clave al repositorio.
 
 ## Pruebas
 
 ```bash
 cd backend
-npm test                    # Jest + Supertest con SQLite en memoria
+npm test                    # Jest + Supertest con SQLite en memoria (154 pruebas)
 
 cd frontend
 npx ng build                # compilación de producción
-npx ng test --no-watch      # Vitest + jsdom, sin navegador
+npx ng test --no-watch      # Vitest + jsdom, sin navegador (135 pruebas)
 ```
 
 Son los mismos pasos que ejecuta el pipeline. Si una prueba falla en local, también fallará en el Pull Request.
 
 ## API REST
 
-Base: `http://localhost:3000/api`
+Base: `http://localhost:3000/api`. Todas las rutas salvo `/auth/register` y `/auth/login` exigen la cabecera
+`Authorization: Bearer <token>`.
 
 | Método | Ruta | Descripción | Respuestas |
 |---|---|---|---|
-| GET | `/tasks?assignee=Ana` | Lista tareas; el filtro es opcional | 200 |
-| GET | `/tasks/:id` | Obtiene una tarea | 200, 404 |
-| POST | `/tasks` | Crea una tarea | 201, 400 |
-| PUT | `/tasks/:id` | Edita título, descripción, prioridad y responsable | 200, 400, 404 |
-| PATCH | `/tasks/:id/status` | Cambia solo el estado | 200, 400, 404 |
-| DELETE | `/tasks/:id` | Elimina una tarea | 204, 404 |
+| POST | `/auth/register` | Crea una cuenta y devuelve `{ token, user }` | 201, 400, 409 |
+| POST | `/auth/login` | Inicia sesión y devuelve `{ token, user }` | 200, 400, 401, 429 |
+| GET | `/auth/me` | Usuario de la sesión | 200, 401 |
+| GET | `/tasks?assignee=Ana&q=texto` | Lista tareas; filtro y búsqueda opcionales y combinables | 200, 401 |
+| GET | `/tasks/:id` | Obtiene una tarea | 200, 401, 404 |
+| POST | `/tasks` | Crea una tarea (`due_date` opcional, `AAAA-MM-DD`) | 201, 400, 401 |
+| PUT | `/tasks/:id` | Edita título, descripción, prioridad, responsable y fecha límite | 200, 400, 401, 404 |
+| PATCH | `/tasks/:id/status` | Cambia solo el estado | 200, 400, 401, 404 |
+| DELETE | `/tasks/:id` | Elimina una tarea y sus comentarios | 204, 401, 404 |
+| GET | `/tasks/:id/comments` | Comentarios de una tarea | 200, 401, 404 |
+| POST | `/tasks/:id/comments` | Agrega un comentario `{ "body": "..." }` | 201, 400, 401, 404 |
+| GET | `/stats` | Totales por estado, vencidas y avance por responsable | 200, 401 |
 
 Los errores responden `{ "error": "mensaje" }`, por ejemplo `400 { "error": "El título es obligatorio" }`.
 
 ```bash
-curl -X POST http://localhost:3000/api/tasks -H "Content-Type: application/json" -d "{\"title\":\"Probar API\",\"assignee\":\"Ana\"}"
-curl -X PATCH http://localhost:3000/api/tasks/1/status -H "Content-Type: application/json" -d "{\"status\":\"en_progreso\"}"
-curl "http://localhost:3000/api/tasks?assignee=Ana"
+# 1. Crear una cuenta (o iniciar sesión con /auth/login) y copiar el "token" de la respuesta
+curl -X POST http://localhost:3000/api/auth/register -H "Content-Type: application/json" -d "{\"name\":\"Ana\",\"email\":\"ana@taskflow.ec\",\"password\":\"secreta123\"}"
+
+# 2. Usar el token en las demás peticiones
+curl http://localhost:3000/api/tasks -H "Authorization: Bearer TU_TOKEN"
+curl -X POST http://localhost:3000/api/tasks -H "Authorization: Bearer TU_TOKEN" -H "Content-Type: application/json" -d "{\"title\":\"Probar API\",\"due_date\":\"2026-10-31\"}"
 ```
 
 En PowerShell usa `curl.exe` en lugar de `curl`.
@@ -124,35 +160,44 @@ El deploy es simulado (el despliegue real está fuera de alcance): el build se d
 | `npm install` falla con `edgesOut` en el frontend | Usa `npm ci`, que respeta el `package-lock.json`. |
 | Puerto 3000 o 4200 ocupado | Cierra el proceso anterior; el frontend espera la API en el puerto 3000. |
 | La interfaz dice "No se pudo conectar con el servidor" | La API no está corriendo: inicia `npm start` en `backend/`. |
+| Te saca a la pantalla de inicio de sesión al reiniciar la API | Normal sin `JWT_SECRET`: defínela (ver arriba) o vuelve a iniciar sesión. |
+| "Demasiados intentos, espera unos minutos" | 5 contraseñas incorrectas seguidas bloquean ese correo 15 minutos (o reinicia la API). |
 
 ## Estructura
 
 ```text
 .specify/memory/constitution.md   Principios del proyecto (Spec Kit)
-specs/001-gestor-tareas/
-├── spec.md                       Qué hace el sistema y por qué
-├── plan.md                       Cómo se construye (tecnología, datos, API)
-└── tasks.md                      Tareas ordenadas para implementar
+specs/
+├── 001-gestor-tareas/            v1: spec.md, plan.md, tasks.md
+└── 002-taskflow-v2/              v2: cuentas, diseño y productividad
 docs/
 ├── flujo-de-trabajo.md           Ramas, commits, PR, code review y gestión
 ├── verificacion.md               Verificación de requisitos y criterios de éxito
 └── capturas/                     Capturas de pantalla del README
 backend/
-├── src/                          app.js, server.js, db.js, tasks.repository.js, tasks.routes.js
+├── src/
+│   ├── app.js, server.js         Aplicación Express y punto de entrada
+│   ├── db.js                     Conexión SQLite y migraciones
+│   ├── auth.js                   Registro, inicio de sesión, JWT y límite de intentos
+│   ├── tasks.routes.js           Rutas de tareas y comentarios
+│   ├── stats.routes.js           Estadísticas
+│   └── *.repository.js           Consultas SQL (tareas, usuarios, comentarios)
 └── tests/                        Pruebas de la API (Jest + Supertest)
 frontend/src/app/
-├── models/task.ts                Interfaz Task y tipos
-├── services/task.service.ts      Cliente HTTP de la API
-└── components/                   board, task-card, task-form
+├── models/                       Task, User y utilidades (vencidas, orden)
+├── services/                     TaskService, AuthService, ThemeService
+├── interceptors/, guards/        Token en cada petición y rutas protegidas
+├── pages/                        login, register, stats
+└── components/                   board, task-card, task-form, task-comments
 .github/workflows/                Pipeline CI/CD
 ```
 
 ## Flujo SDD aplicado
 
 1. **Constitución** → [`constitution.md`](.specify/memory/constitution.md)
-2. **Especificación** → [`spec.md`](specs/001-gestor-tareas/spec.md)
-3. **Plan técnico** → [`plan.md`](specs/001-gestor-tareas/plan.md)
-4. **Tareas** → [`tasks.md`](specs/001-gestor-tareas/tasks.md)
+2. **Especificación** → [v1](specs/001-gestor-tareas/spec.md) y [v2](specs/002-taskflow-v2/spec.md)
+3. **Plan técnico** → [v1](specs/001-gestor-tareas/plan.md) y [v2](specs/002-taskflow-v2/plan.md)
+4. **Tareas** → [v1](specs/001-gestor-tareas/tasks.md) y [v2](specs/002-taskflow-v2/tasks.md)
 5. **Implementación** → ramas `feature/*` con Pull Requests
 
 Detalle del flujo de trabajo: [`docs/flujo-de-trabajo.md`](docs/flujo-de-trabajo.md).

@@ -1,0 +1,131 @@
+<div class="space-y-6">
+  <div>
+    <h2 class="text-2xl font-bold tracking-tight">Estadísticas</h2>
+    <p class="text-sm text-slate-500 dark:text-slate-400">Resumen del avance del equipo</p>
+  </div>
+
+  @if (error(); as message) {
+    <p class="alert-error" role="alert">{{ message }}</p>
+  }
+
+  @if (data(); as stats) {
+    <div class="grid gap-4 sm:grid-cols-3">
+      <div class="card" data-stat="total">
+        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Tareas</p>
+        <p class="mt-1 text-4xl font-bold tracking-tight">{{ stats.total }}</p>
+      </div>
+      <div class="card" data-stat="done">
+        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Completadas</p>
+        <p class="mt-1 text-4xl font-bold tracking-tight">{{ donePercent() }}%</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          {{ stats.byStatus.hecha }} de {{ stats.total }}
+        </p>
+      </div>
+      <div class="card" data-stat="overdue">
+        <p class="text-sm font-medium text-slate-500 dark:text-slate-400">Vencidas</p>
+        <p class="mt-1 text-4xl font-bold tracking-tight">{{ stats.overdue }}</p>
+        @if (stats.overdue > 0) {
+          <p
+            class="inline-flex items-center gap-1 text-sm font-medium text-rose-700 dark:text-rose-300"
+          >
+            <svg
+              class="size-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"
+              />
+            </svg>
+            Requieren atención
+          </p>
+        } @else {
+          <p class="text-sm text-slate-500 dark:text-slate-400">Al día</p>
+        }
+      </div>
+    </div>
+
+    @if (stats.total === 0) {
+      <p
+        class="rounded-2xl border-2 border-dashed border-slate-300 px-4 py-10 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400"
+      >
+        Todavía no hay tareas. Crea algunas en el tablero para ver el avance.
+      </p>
+    } @else {
+      <section class="card space-y-4">
+        <h3 class="font-semibold">Tareas por estado</h3>
+        <div
+          class="flex h-4 gap-0.5 overflow-hidden rounded-full"
+          role="img"
+          [attr.aria-label]="
+            segments()[0].label +
+            ' ' +
+            segments()[0].count +
+            ', ' +
+            segments()[1].label +
+            ' ' +
+            segments()[1].count +
+            ', ' +
+            segments()[2].label +
+            ' ' +
+            segments()[2].count
+          "
+        >
+          @for (segment of segments(); track segment.status) {
+            @if (segment.count > 0) {
+              <div
+                class="h-full transition-opacity hover:opacity-80"
+                [class]="segment.color"
+                [style.width.%]="segment.percent"
+                [title]="segment.label + ': ' + segment.count + ' (' + segment.percent + '%)'"
+              ></div>
+            }
+          }
+        </div>
+        <ul class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          @for (segment of segments(); track segment.status) {
+            <li data-legend class="flex items-center gap-2">
+              <span class="size-3 rounded-sm" [class]="segment.color" aria-hidden="true"></span>
+              <span class="text-slate-600 dark:text-slate-300"
+                >{{ segment.label }}
+                <strong class="text-slate-900 dark:text-slate-100">{{
+                  segment.count
+                }}</strong></span
+              >
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="card space-y-4">
+        <h3 class="font-semibold">Avance por responsable</h3>
+        <ul class="space-y-4">
+          @for (person of people(); track person.name) {
+            <li data-assignee class="space-y-1.5">
+              <div class="flex items-baseline justify-between gap-3 text-sm">
+                <span class="font-medium">{{ person.name }}</span>
+                <span class="text-slate-500 tabular-nums dark:text-slate-400">
+                  {{ person.done }} de {{ person.total }} · {{ person.percent }}%
+                </span>
+              </div>
+              <div
+                class="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"
+                [title]="person.name + ': ' + person.done + ' de ' + person.total + ' hechas'"
+              >
+                <div
+                  class="h-full rounded-full bg-indigo-500"
+                  [style.width.%]="person.percent"
+                ></div>
+              </div>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</div>
