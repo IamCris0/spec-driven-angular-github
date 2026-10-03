@@ -3,9 +3,16 @@ import { Board } from './components/board/board';
 import { authGuard, guestGuard } from './guards/auth.guard';
 import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
+import { Stats } from './pages/stats/stats';
 
 export const routes: Routes = [
   { path: '', component: Board, canActivate: [authGuard], title: 'Tablero · TaskFlow' },
+  {
+    path: 'estadisticas',
+    component: Stats,
+    canActivate: [authGuard],
+    title: 'Estadísticas · TaskFlow',
+  },
   {
     path: 'login',
     component: Login,

@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
-import { Task, TaskInput } from '../models/task';
+import { Comment, Stats, Task, TaskInput } from '../models/task';
 import { TaskService } from './task.service';
 
 const API_URL = 'http://localhost:3000/api';
@@ -16,6 +16,10 @@ const task: Task = {
   assignee: null,
   created_at: '2026-09-29T12:00:00.000Z',
   updated_at: '2026-09-29T12:00:00.000Z',
+  created_by: 1,
+  created_by_name: 'Ana Torres',
+  due_date: null,
+  comment_count: 0,
 };
 
 describe('TaskService', () => {
@@ -132,6 +136,77 @@ describe('TaskService', () => {
     await expect(result).rejects.toMatchObject({
       status: 400,
       error: { error: 'El título es obligatorio' },
+    });
+  });
+
+  describe('búsqueda, comentarios y estadísticas', () => {
+    it('combina el filtro por responsable y la búsqueda', () => {
+      service.list('Ana', 'pipe line').subscribe();
+
+      http.expectOne(`${API_URL}/tasks?assignee=Ana&q=pipe%20line`).flush([]);
+    });
+
+    it('busca sin filtro de responsable', () => {
+      service.list(undefined, 'ci').subscribe();
+
+      http.expectOne(`${API_URL}/tasks?q=ci`).flush([]);
+    });
+
+    it('no envía una búsqueda vacía', () => {
+      service.list('', '   ').subscribe();
+
+      http.expectOne(`${API_URL}/tasks`).flush([]);
+    });
+
+    it('envía la fecha límite al crear', () => {
+      service.create({ title: 'Con fecha', due_date: '2026-10-31' }).subscribe();
+
+      const req = http.expectOne(`${API_URL}/tasks`);
+      expect(req.request.body).toEqual({ title: 'Con fecha', due_date: '2026-10-31' });
+      req.flush(task);
+    });
+
+    it('lista los comentarios de una tarea', async () => {
+      const comments: Comment[] = [
+        {
+          id: 1,
+          task_id: 1,
+          user_id: 1,
+          user_name: 'Ana',
+          body: 'Hola',
+          created_at: '2026-10-03T10:00:00.000Z',
+        },
+      ];
+      const result = firstValueFrom(service.comments(1));
+
+      const req = http.expectOne(`${API_URL}/tasks/1/comments`);
+      expect(req.request.method).toBe('GET');
+      req.flush(comments);
+
+      expect(await result).toEqual(comments);
+    });
+
+    it('agrega un comentario', () => {
+      service.addComment(1, '¿Lo reviso?').subscribe();
+
+      const req = http.expectOne(`${API_URL}/tasks/1/comments`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ body: '¿Lo reviso?' });
+      req.flush({});
+    });
+
+    it('obtiene las estadísticas', async () => {
+      const stats: Stats = {
+        total: 1,
+        byStatus: { pendiente: 1, en_progreso: 0, hecha: 0 },
+        overdue: 0,
+        byAssignee: [{ assignee: 'Ana', total: 1, done: 0 }],
+      };
+      const result = firstValueFrom(service.stats());
+
+      http.expectOne(`${API_URL}/stats`).flush(stats);
+
+      expect(await result).toEqual(stats);
     });
   });
 });

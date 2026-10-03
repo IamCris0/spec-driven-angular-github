@@ -34,6 +34,7 @@ export class TaskForm implements OnInit {
     description: new FormControl('', { nonNullable: true }),
     priority: new FormControl<TaskPriority>('media', { nonNullable: true }),
     assignee: new FormControl('', { nonNullable: true }),
+    due_date: new FormControl('', { nonNullable: true }),
   });
 
   ngOnInit(): void {
@@ -44,6 +45,7 @@ export class TaskForm implements OnInit {
         description: task.description ?? '',
         priority: task.priority,
         assignee: task.assignee ?? '',
+        due_date: task.due_date ?? '',
       });
     }
   }
@@ -59,13 +61,16 @@ export class TaskForm implements OnInit {
       return;
     }
 
-    const { title, description, priority, assignee } = this.form.getRawValue();
+    const { title, description, priority, assignee, due_date } = this.form.getRawValue();
     const task: TaskInput = { title: title.trim(), priority };
     if (description.trim()) {
       task.description = description.trim();
     }
     if (assignee.trim()) {
       task.assignee = assignee.trim();
+    }
+    if (due_date) {
+      task.due_date = due_date;
     }
 
     this.saved.emit(task);

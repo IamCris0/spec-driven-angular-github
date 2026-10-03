@@ -73,6 +73,14 @@ describe('TaskForm', () => {
     ]);
   });
 
+  it('incluye la fecha límite cuando se indica', async () => {
+    type(field('title'), 'Con fecha');
+    type(field('due_date'), '2026-10-31');
+    await submit();
+
+    expect(saved).toEqual([{ title: 'Con fecha', priority: 'media', due_date: '2026-10-31' }]);
+  });
+
   it('limpia el formulario después de guardar', async () => {
     type(field('title'), 'Tarea');
     await submit();
@@ -93,6 +101,10 @@ describe('TaskForm en modo edición', () => {
     assignee: 'Ana',
     created_at: '2026-09-29T12:00:00.000Z',
     updated_at: '2026-09-29T12:00:00.000Z',
+    created_by: 1,
+    created_by_name: 'Ana Torres',
+    due_date: '2026-11-15',
+    comment_count: 0,
   };
   let fixture: ComponentFixture<TaskForm>;
   let root: HTMLElement;
@@ -119,6 +131,7 @@ describe('TaskForm en modo edición', () => {
     expect(value('description')).toBe('Detalle');
     expect(value('priority')).toBe('alta');
     expect(value('assignee')).toBe('Ana');
+    expect(value('due_date')).toBe('2026-11-15');
     expect(root.querySelector('button[type="submit"]')?.textContent).toContain('Guardar cambios');
   });
 
@@ -128,7 +141,9 @@ describe('TaskForm en modo edición', () => {
     root.querySelector('form')!.dispatchEvent(new Event('submit'));
     await fixture.whenStable();
 
-    expect(saved).toEqual([{ title: 'Editada', description: 'Detalle', priority: 'alta' }]);
+    expect(saved).toEqual([
+      { title: 'Editada', description: 'Detalle', priority: 'alta', due_date: '2026-11-15' },
+    ]);
     expect(value('title')).toBe('Editada');
   });
 

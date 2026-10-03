@@ -1,5 +1,13 @@
-import { Component, computed, input, output } from '@angular/core';
-import { STATUS_LABELS, Task, TaskPriority, TaskStatus } from '../../models/task';
+import { Component, computed, input, output, signal } from '@angular/core';
+import {
+  STATUS_LABELS,
+  Task,
+  TaskPriority,
+  TaskStatus,
+  isOverdue,
+  todayLocal,
+} from '../../models/task';
+import { TaskComments } from '../task-comments/task-comments';
 
 /** A qué columnas puede pasar una tarea desde su estado actual. */
 const MOVES: Record<TaskStatus, TaskStatus[]> = {
@@ -23,6 +31,7 @@ const CHIPS: Record<TaskPriority, string> = {
 
 @Component({
   selector: 'app-task-card',
+  imports: [TaskComments],
   templateUrl: './task-card.html',
 })
 export class TaskCard {
@@ -30,6 +39,15 @@ export class TaskCard {
   readonly move = output<{ id: number; status: TaskStatus }>();
   readonly edit = output<number>();
   readonly remove = output<number>();
+  /** Se agregó un comentario a la tarea (el tablero actualiza el contador). */
+  readonly commented = output<number>();
+
+  protected readonly showComments = signal(false);
+  protected readonly overdue = computed(() => isOverdue(this.task(), todayLocal()));
+  /** AAAA-MM-DD → DD/MM/AAAA. */
+  protected readonly due = computed(
+    () => this.task().due_date?.split('-').reverse().join('/') ?? null,
+  );
 
   protected readonly accent = computed(() => ACCENTS[this.task().priority]);
   protected readonly chip = computed(() => CHIPS[this.task().priority]);
