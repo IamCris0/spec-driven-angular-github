@@ -81,3 +81,85 @@ Después, actualizar `develop` con un PR desde `main` y abrir los siguientes PR 
 
 El contrato de la API de `plan.md` incluye `GET /tasks/:id` (200, 404), pero ninguna tarea de `tasks.md` lo
 cubría y la ruta no existía. Se agregó con sus pruebas en esta misma rama.
+
+---
+
+# Verificación de TaskFlow v2 (T041)
+
+Comprobación de [`002-taskflow-v2/spec.md`](../specs/002-taskflow-v2/spec.md) contra la rama
+`docs/011-documentacion-v2`, que incluye las Fases 6 a 9.
+
+**Fecha**: 2026-10-03
+
+## Cómo se verificó
+
+| Tipo | Herramienta | Resultado |
+|---|---|---|
+| Pruebas de la API | Jest + Supertest | 154 pruebas en verde (82 nuevas) |
+| Pruebas del frontend | Vitest + jsdom | 135 pruebas en verde (86 nuevas) |
+| Compilación | `ng build` | Sin errores ni avisos |
+| Punta a punta | API real + `ng serve` + Chromium sin interfaz | Todos los escenarios en verde (ver abajo) |
+| Paleta de estadísticas | Validador de la guía de dataviz, en claro y oscuro | Pasa las cinco comprobaciones; separación para daltonismo ΔE ≥ 10 |
+| Pipeline | GitHub Actions | Pendiente: se ejecuta al abrir el Pull Request |
+
+Recorridos de punta a punta:
+
+- **Sesión**: sin sesión `/` lleva a `/login`; registro; la sesión sobrevive a recargar; con sesión `/login` lleva
+  al tablero; cerrar sesión; contraseña incorrecta; un token alterado vuelve a `/login` con "Tu sesión expiró".
+- **Productividad**: "Vencida" en una tarea en progreso con fecha pasada y no en una hecha; "Creada por"; crear con
+  fecha límite; ordenar por fecha; buscar; comentar (el contador sube); arrastrar a otra columna con el ratón
+  (envía el `PATCH` y persiste); estadísticas.
+- **Diseño**: modo claro y oscuro (el tema persiste al recargar); 375 px de ancho sin desplazamiento horizontal en
+  inicio de sesión, tablero y estadísticas.
+
+## Historias de usuario
+
+| Historia | Evidencia | Estado |
+|---|---|---|
+| H6 Crear una cuenta (P1) | `auth.test.js` (registro, 409, validaciones), `register.spec.ts`, punta a punta | Cumple |
+| H7 Iniciar y cerrar sesión (P1) | `auth.test.js` (login, 401, 429, tokens), `auth.service.spec.ts`, `auth.interceptor.spec.ts`, `auth.guard.spec.ts`, `login.spec.ts`, punta a punta | Cumple |
+| H8 Quién creó cada tarea (P2) | `tasks.test.js` (autoría), `task-card.spec.ts`, punta a punta | Cumple |
+| H9 Fecha límite y vencidas (P2) | `productivity.test.js`, `task.spec.ts`, `task-card.spec.ts`, `board.spec.ts` (orden), punta a punta | Cumple |
+| H10 Arrastrar y soltar (P2) | `board.spec.ts` (soltar en otra columna y en la misma), punta a punta con el ratón | Cumple |
+| H11 Buscar tareas (P2) | `productivity.test.js` (búsqueda, combinación, `%` y `_`), `board.spec.ts`, punta a punta | Cumple |
+| H12 Comentar una tarea (P3) | `productivity.test.js`, `task-comments.spec.ts`, `board.spec.ts`, punta a punta | Cumple |
+| H13 Panel de estadísticas (P3) | `productivity.test.js` (`/stats`), `stats.spec.ts`, punta a punta | Cumple |
+| H14 Diseño moderno y modo oscuro (P2) | `theme.service.spec.ts`, capturas en claro, oscuro y móvil | Cumple |
+
+## Casos borde
+
+| Caso | Estado |
+|---|---|
+| Token manipulado, de otra clave, sin firma (`alg: none`), vencido o de un usuario eliminado → 401 | Cumple |
+| Más de 5 intentos fallidos en 15 minutos → 429 "Demasiados intentos, espera unos minutos" | Cumple |
+| Fecha límite inválida (por ejemplo `2026-02-30`) → 400 "La fecha límite no es válida" | Cumple |
+| Al eliminar una tarea se eliminan sus comentarios | Cumple |
+| Una base de la v1 se actualiza al arrancar y conserva sus tareas | Cumple (`db.test.js` con un archivo real de la v1) |
+
+## Criterios de éxito
+
+| Criterio | Resultado | Estado |
+|---|---|---|
+| CE-005 Ninguna ruta de tareas, comentarios o estadísticas responde sin token | Pruebas de las seis rutas de tareas, de comentarios y de `/stats` sin token | Cumple |
+| CE-006 Contraseñas solo como hash bcrypt | Prueba que lee la tabla `users` y verifica el hash | Cumple |
+| CE-007 Historias P1 y P2 con pruebas en GitHub Actions | Pruebas escritas; el pipeline las ejecuta sin cambios | Pendiente de ver en verde en el PR |
+| CE-008 Sin desplazamiento horizontal a 375 px | Medido en Chromium: 375 px exactos en las tres pantallas | Cumple |
+
+## Hallazgos corregidos durante la verificación
+
+- La ruta `/estadisticas` no estaba registrada y ninguna prueba lo detectaba: se corrigió y se agregó
+  `app.routes.spec.ts`.
+- En modo oscuro se perdía el borde de color por prioridad de las tarjetas.
+- En el móvil, la barra superior desbordaba 375 px.
+- El formulario de comentarios no enviaba (`ngSubmit` sin `[formGroup]`) y su campo quedaba muy angosto en
+  columnas estrechas.
+- La paleta inicial de estados (gris, ámbar-400 y esmeralda-500) no pasaba el validador; se reemplazó.
+
+## Limitaciones conocidas
+
+- El límite de intentos de inicio de sesión vive en memoria: se reinicia con la API y no se comparte entre
+  varias instancias.
+- La búsqueda y el filtro no distinguen mayúsculas solo en letras sin tilde (por ejemplo, `Á` y `á` se consideran
+  distintas).
+- El token se guarda en `localStorage`; el plan de la v2 explica por qué se acepta y cuál sería la alternativa en
+  producción.

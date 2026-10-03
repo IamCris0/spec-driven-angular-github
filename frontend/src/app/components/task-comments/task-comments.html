@@ -23,16 +23,16 @@
     }
   </ul>
 
-  <form class="flex items-end gap-2" (submit)="$event.preventDefault(); send()">
+  <form class="flex flex-col gap-2" (submit)="$event.preventDefault(); send()">
     <textarea
-      class="input min-h-9 resize-y py-1.5"
-      rows="1"
+      class="input resize-y py-1.5"
+      rows="2"
       maxlength="500"
       placeholder="Escribe un comentario"
       aria-label="Nuevo comentario"
       [formControl]="body"
     ></textarea>
-    <button type="submit" class="btn btn-primary px-3 py-1.5" [disabled]="sending()">
+    <button type="submit" class="btn btn-primary self-end px-3 py-1.5" [disabled]="sending()">
       Comentar
     </button>
   </form>
