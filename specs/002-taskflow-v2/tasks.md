@@ -18,9 +18,9 @@ Cada fase se entrega en su propia rama y Pull Request. Dentro de cada historia: 
 
 ## Fase 7: Diseño (rama `feature/009-diseno-tailwind`)
 
-- [ ] T032 [H14] Instalar y configurar Tailwind CSS v4
-- [ ] T033 [H14] Barra superior, modo oscuro persistente (`ThemeService` con pruebas)
-- [ ] T034 [H14] Rediseño adaptable del tablero, tarjetas, formularios y pantallas de sesión
+- [x] T032 [H14] Instalar y configurar Tailwind CSS v4
+- [x] T033 [H14] Barra superior, modo oscuro persistente (`ThemeService` con pruebas)
+- [x] T034 [H14] Rediseño adaptable del tablero, tarjetas, formularios y pantallas de sesión
 
 ## Fase 8: Productividad (rama `feature/010-productividad`)
 

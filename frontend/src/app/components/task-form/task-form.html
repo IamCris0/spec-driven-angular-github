@@ -1,9 +1,15 @@
-<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-  <div class="field">
-    <label [for]="'title-' + formId">Título</label>
-    <input [id]="'title-' + formId" type="text" formControlName="title" />
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate class="card space-y-4 p-4">
+  <div>
+    <label class="label" [for]="'title-' + formId">Título</label>
+    <input
+      class="input"
+      [id]="'title-' + formId"
+      type="text"
+      formControlName="title"
+      placeholder="¿Qué hay que hacer?"
+    />
     @if (title.invalid && (title.touched || submitted())) {
-      <p class="error" data-error="title">
+      <p class="field-error" data-error="title">
         @if (title.hasError('required')) {
           El título es obligatorio
         } @else {
@@ -13,31 +19,50 @@
     }
   </div>
 
-  <div class="field">
-    <label [for]="'description-' + formId">Descripción</label>
-    <textarea [id]="'description-' + formId" rows="2" formControlName="description"></textarea>
+  <div>
+    <label class="label" [for]="'description-' + formId">Descripción</label>
+    <textarea
+      class="input resize-y"
+      [id]="'description-' + formId"
+      rows="2"
+      formControlName="description"
+      placeholder="Detalles opcionales"
+    ></textarea>
   </div>
 
-  <div class="row">
-    <div class="field">
-      <label [for]="'priority-' + formId">Prioridad</label>
-      <select [id]="'priority-' + formId" formControlName="priority">
+  <div class="grid grid-cols-2 gap-3">
+    <div>
+      <label class="label" [for]="'priority-' + formId">Prioridad</label>
+      <select class="input" [id]="'priority-' + formId" formControlName="priority">
         @for (priority of priorities; track priority) {
           <option [value]="priority">{{ priority }}</option>
         }
       </select>
     </div>
 
-    <div class="field">
-      <label [for]="'assignee-' + formId">Responsable</label>
-      <input [id]="'assignee-' + formId" type="text" formControlName="assignee" />
+    <div>
+      <label class="label" [for]="'assignee-' + formId">Responsable</label>
+      <input
+        class="input"
+        [id]="'assignee-' + formId"
+        type="text"
+        formControlName="assignee"
+        placeholder="Opcional"
+      />
     </div>
   </div>
 
-  <div class="buttons">
-    <button type="submit">{{ task() ? 'Guardar cambios' : 'Crear tarea' }}</button>
+  <div class="flex gap-2">
+    <button type="submit" class="btn btn-primary flex-1">
+      {{ task() ? 'Guardar cambios' : 'Crear tarea' }}
+    </button>
     @if (task()) {
-      <button type="button" class="secondary" data-action="cancel" (click)="cancelled.emit()">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        data-action="cancel"
+        (click)="cancelled.emit()"
+      >
         Cancelar
       </button>
     }
