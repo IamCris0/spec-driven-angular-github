@@ -174,3 +174,69 @@ describe('TaskForm al crear', () => {
     expect(fixture.nativeElement.querySelector('button[data-action="cancel"]')).toBeNull();
   });
 });
+
+// Validaciones de specs/003-respaldos-validaciones (H19): mismos mensajes que la API.
+describe('TaskForm: validaciones de la v3', () => {
+  let fixture: ComponentFixture<TaskForm>;
+  let root: HTMLElement;
+  let saved: TaskInput[];
+
+  const field = (name: string) => root.querySelector(`[formcontrolname="${name}"]`);
+  const error = (name: string) =>
+    root.querySelector(`[data-error="${name}"]`)?.textContent?.trim();
+
+  async function submitWith(values: Record<string, string>): Promise<void> {
+    type(field('title'), 'Tarea');
+    Object.entries(values).forEach(([name, value]) => type(field(name), value));
+    root.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+  }
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({ imports: [TaskForm] }).compileComponents();
+    fixture = TestBed.createComponent(TaskForm);
+    root = fixture.nativeElement;
+    saved = [];
+    fixture.componentInstance.saved.subscribe((task) => saved.push(task));
+    await fixture.whenStable();
+  });
+
+  it.each([
+    ['description', 'd'.repeat(1001), 'La descripción no puede superar los 1000 caracteres'],
+    ['assignee', 'r'.repeat(61), 'El responsable no puede superar los 60 caracteres'],
+    ['due_date', '1999-12-31', 'La fecha límite debe estar entre los años 2000 y 2099'],
+    ['due_date', '2100-01-01', 'La fecha límite debe estar entre los años 2000 y 2099'],
+  ])('rechaza un valor fuera de rango en %s (caso %#)', async (name, value, message) => {
+    await submitWith({ [name]: value });
+
+    expect(error(name)).toBe(message);
+    expect(saved).toEqual([]);
+  });
+
+  it('acepta los valores límite', async () => {
+    await submitWith({
+      description: 'd'.repeat(1000),
+      assignee: 'r'.repeat(60),
+      due_date: '2099-12-31',
+    });
+
+    expect(saved).toHaveLength(1);
+    expect(error('description')).toBeUndefined();
+  });
+
+  it('muestra cuántos caracteres lleva la descripción', async () => {
+    type(field('description'), 'Hola');
+    await fixture.whenStable();
+
+    expect(root.querySelector('[data-counter="description"]')?.textContent?.trim()).toBe(
+      '4/1000',
+    );
+  });
+
+  it('limita el selector de fecha a los años 2000-2099', () => {
+    const date = field('due_date') as HTMLInputElement;
+
+    expect(date.min).toBe('2000-01-01');
+    expect(date.max).toBe('2099-12-31');
+  });
+});
