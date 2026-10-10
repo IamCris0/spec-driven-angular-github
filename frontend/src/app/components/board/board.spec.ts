@@ -479,4 +479,49 @@ describe('Board', () => {
       expect(toggle().textContent).toContain('2');
     });
   });
+
+  describe('responsables escritos con distintas mayúsculas', () => {
+    const options = () =>
+      Array.from(root.querySelectorAll('select[data-filter="assignee"] option')).map((option) =>
+        option.textContent?.trim(),
+      );
+
+    it('muestra una sola opción por persona, con la primera forma escrita', async () => {
+      await open([
+        makeTask({ id: 1, title: 'A', assignee: 'Ana' }),
+        makeTask({ id: 2, title: 'B', assignee: 'ana' }),
+        makeTask({ id: 3, title: 'C', assignee: 'Luis' }),
+        makeTask({ id: 4, title: 'D', assignee: 'ANA' }),
+      ]);
+
+      expect(options()).toEqual(['Todos', 'Ana', 'Luis']);
+    });
+
+    it('trata como distintas las letras con tilde, igual que el filtro de la API', async () => {
+      await open([
+        makeTask({ id: 1, title: 'A', assignee: 'Ángel' }),
+        makeTask({ id: 2, title: 'B', assignee: 'ángel' }),
+      ]);
+
+      expect(options()).toEqual(['Todos', 'ángel', 'Ángel']);
+    });
+
+    it('al crear una tarea con otra forma del mismo nombre no agrega una opción', async () => {
+      await open([makeTask({ id: 1, title: 'A', assignee: 'Ana' })]);
+
+      const title = root.querySelector<HTMLInputElement>('[formcontrolname="title"]')!;
+      title.value = 'B';
+      title.dispatchEvent(new Event('input'));
+      root.querySelector('form')!.dispatchEvent(new Event('submit'));
+      http
+        .expectOne(`${API_URL}/tasks`)
+        .flush(makeTask({ id: 2, title: 'B', assignee: 'ana' }), {
+          status: 201,
+          statusText: 'Created',
+        });
+      await fixture.whenStable();
+
+      expect(options()).toEqual(['Todos', 'Ana']);
+    });
+  });
 });

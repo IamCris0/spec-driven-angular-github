@@ -100,7 +100,8 @@ Comprobación de [`002-taskflow-v2/spec.md`](../specs/002-taskflow-v2/spec.md) c
 | Compilación | `ng build` | Sin errores ni avisos |
 | Punta a punta | API real + `ng serve` + Chromium sin interfaz | Todos los escenarios en verde (ver abajo) |
 | Paleta de estadísticas | Validador de la guía de dataviz, en claro y oscuro | Pasa las cinco comprobaciones; separación para daltonismo ΔE ≥ 10 |
-| Pipeline | GitHub Actions | Pendiente: se ejecuta al abrir el Pull Request |
+| Pipeline | GitHub Actions en los PR #8 a #18 y en los push a `main` y `develop` | En verde |
+| Deploy simulado | Job `deploy` del push a `main` del commit `64f2b7d` (run 37088777150) | En verde; artefacto `taskflow-frontend` de 127 KB |
 
 Recorridos de punta a punta:
 
@@ -142,7 +143,7 @@ Recorridos de punta a punta:
 |---|---|---|
 | CE-005 Ninguna ruta de tareas, comentarios o estadísticas responde sin token | Pruebas de las seis rutas de tareas, de comentarios y de `/stats` sin token | Cumple |
 | CE-006 Contraseñas solo como hash bcrypt | Prueba que lee la tabla `users` y verifica el hash | Cumple |
-| CE-007 Historias P1 y P2 con pruebas en GitHub Actions | Pruebas escritas; el pipeline las ejecuta sin cambios | Pendiente de ver en verde en el PR |
+| CE-007 Historias P1 y P2 con pruebas en GitHub Actions | Jobs `backend` y `frontend` en verde en los PR #10 a #15, que incluyen las pruebas de H6 a H11 y H14 | Cumple |
 | CE-008 Sin desplazamiento horizontal a 375 px | Medido en Chromium: 375 px exactos en las tres pantallas | Cumple |
 
 ## Hallazgos corregidos durante la verificación
@@ -154,6 +155,31 @@ Recorridos de punta a punta:
 - El formulario de comentarios no enviaba (`ngSubmit` sin `[formGroup]`) y su campo quedaba muy angosto en
   columnas estrechas.
 - La paleta inicial de estados (gris, ámbar-400 y esmeralda-500) no pasaba el validador; se reemplazó.
+
+## Reverificación (2026-10-10)
+
+Se repitió la verificación sobre `main` (`64f2b7d`) con la rama `fix/012-mantenimiento`:
+
+| Tipo | Resultado |
+|---|---|
+| Pruebas de la API | 154 en verde; cobertura del 99 % de las líneas y del 88 % de las ramas |
+| Pruebas del frontend | 138 en verde (3 nuevas) |
+| Compilación | `ng build` sin errores ni avisos |
+| Punta a punta | 37 escenarios en verde y sin errores de JavaScript, partiendo de una base de la v1 que se actualizó sola y conservó su tarea |
+| `npm audit` | 0 vulnerabilidades en `backend` y en `frontend` |
+
+Hallazgos corregidos:
+
+- Si el mismo responsable estaba escrito con distintas mayúsculas ("Ana" y "ana"), el selector del tablero mostraba
+  dos opciones que filtraban lo mismo, porque la API compara sin distinguir mayúsculas. Ahora muestra una sola, con
+  la primera forma escrita.
+- `npm audit` reportaba 4 vulnerabilidades altas en el frontend y 19 moderadas en el backend, todas en dependencias
+  de desarrollo (`npm audit --omit=dev` ya daba 0). Se actualizaron Angular CLI y `@angular/build` a 21.2.26, lo que
+  permitió quitar el override de `piscina`, y en el backend un override acotado de `js-yaml` elimina `sprintf-js`,
+  que llegaba a través de Jest.
+
+CE-004 sigue sin cumplirse: `main` y `develop` siguen sin protección de ramas por decisión del equipo, y `29b9ddd` y
+`64f2b7d` llegaron a `main` con push directos, sin Pull Request.
 
 ## Limitaciones conocidas
 
