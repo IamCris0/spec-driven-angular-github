@@ -35,8 +35,19 @@ const COLUMN_DOTS: Record<TaskStatus, string> = {
 
 const SEARCH_DELAY_MS = 300;
 
+/**
+ * Responsables sin repetir y ordenados. "Ana" y "ana" son la misma persona, igual que en el filtro de la API
+ * (COLLATE NOCASE, que solo iguala letras sin tilde); se muestra la primera forma escrita.
+ */
 function sortedNames(names: Iterable<string>): string[] {
-  return [...new Set(names)].sort((a, b) => a.localeCompare(b));
+  const byKey = new Map<string, string>();
+  for (const name of names) {
+    const key = name.replace(/[A-Z]/g, (letter) => letter.toLowerCase());
+    if (!byKey.has(key)) {
+      byKey.set(key, name);
+    }
+  }
+  return [...byKey.values()].sort((a, b) => a.localeCompare(b));
 }
 
 @Component({
