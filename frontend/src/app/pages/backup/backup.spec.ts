@@ -137,7 +137,7 @@ describe('Backup', () => {
       imported.complete();
       await fixture.whenStable();
 
-      expect(status()).toBe('Se importaron 2 tareas y se omitieron 1 que ya existían');
+      expect(status()).toBe('Se importaron 2 tareas y se omitió 1 que ya existía');
       expect(button('import')).toBeNull();
     });
 
@@ -151,6 +151,21 @@ describe('Backup', () => {
       await fixture.whenStable();
 
       expect(status()).toBe('Se importó 1 tarea');
+    });
+
+    it.each([
+      [3, 0, 'Se importaron 3 tareas'],
+      [1, 2, 'Se importó 1 tarea y se omitieron 2 que ya existían'],
+      [0, 3, 'No se importó nada: las 3 tareas ya existían'],
+      [0, 1, 'No se importó nada: la tarea ya existía'],
+    ])('resume %i importadas y %i omitidas', async (count, skipped, message) => {
+      await choose(JSON.stringify(BACKUP));
+      button('import')!.click();
+      imported.next({ imported: count, skipped });
+      imported.complete();
+      await fixture.whenStable();
+
+      expect(status()).toBe(message);
     });
 
     it('muestra el error de la API y permite reintentar', async () => {
