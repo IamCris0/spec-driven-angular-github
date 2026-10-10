@@ -27,7 +27,7 @@ tres versiones con GitHub Spec Kit, Pull Requests y un pipeline de GitHub Action
 combinación de especificaciones, pruebas automatizadas e integración continua permitió entregar 19 historias de
 usuario con 405 pruebas automáticas y ninguna ejecución fallida del pipeline, pero también que las prácticas
 humanas —la revisión de código y la protección de ramas— no se cumplieron, y que la IA generó la mayor parte del
-código. Con esas lecciones se propone un modelo de adopción en cuatro fases, con políticas, métricas y costos, para
+código. Con esas lecciones se propone un modelo de adopción en cuatro fases, con políticas, roles y métricas, para
 una empresa real como la Universidad Técnica de Machala (UTMACH) o una startup.
 
 *Palabras clave*: Spec Driven Development, GitHub Actions, integración continua, desarrollo guiado por pruebas,
@@ -348,12 +348,7 @@ humanas en reglas que el sistema haga cumplir.
 
 El modelo combina cinco piezas que se refuerzan entre sí:
 
-```text
-  Issue en el tablero  →  Especificación (Spec Kit)  →  Rama feature/*  →  Pruebas primero (TDD)
-        ↑                                                                        ↓
-  Métricas DORA  ←  Deploy automático  ←  Merge a develop/main  ←  PR: pipeline en verde + 1 aprobación
-                                                                     (IA asiste; la persona responde)
-```
+![Ciclo de trabajo del modelo propuesto: issue, especificación, rama, pruebas primero, Pull Request con pipeline y aprobación, merge, deploy automático y métricas](modelo.png)
 
 | Problema de la empresa | Práctica | Herramienta | Cómo se mide |
 |---|---|---|---|
