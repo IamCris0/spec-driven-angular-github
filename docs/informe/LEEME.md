@@ -12,8 +12,8 @@
 1. Completar todo lo que está entre corchetes: nombres, universidad, docente, fecha, uso de Copilot, qué revisó cada
    integrante y la respuesta a "¿Qué herramienta fue más útil?".
 2. Revisar el borrador **los dos integrantes** en el Pull Request (comentarios en las líneas que cambien).
-3. Completar los datos en `informe-apa7.docx` (o regenerarlo desde el `.md`) y revisar que se mantenga el formato APA 7
-   de trabajos de estudiantes:
+3. Completar los datos en `informe-apa7.docx` (y los mismos cambios en el `.md`, para que no se separen) y revisar que
+   se mantenga el formato APA 7 de trabajos de estudiantes:
    - Times New Roman 12 o Calibri 11, doble espacio en todo el documento y márgenes de 2,54 cm.
    - Portada con título en negrita, autores, institución, curso, docente y fecha; número de página arriba a la
      derecha.

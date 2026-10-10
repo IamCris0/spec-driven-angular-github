@@ -4,6 +4,10 @@
 se vea el trabajo en equipo). La rúbrica pide: explicación clara del modelo propuesto y un ejemplo práctico del
 sistema hecho con SDD.
 
+**Diapositivas**: https://claude.ai/artifact/XC6K3toryXPt1nXT6BUVJa (14 diapositivas con notas del expositor; se
+descargan como PowerPoint o PDF desde el menú *Share → Export*). El enlace es privado hasta compartirlo con el
+compañero desde ese mismo menú. Faltan los nombres y la fecha en la portada y en la última diapositiva.
+
 ## Diapositivas
 
 | # | Título | Quién | Tiempo | Qué decir |
