@@ -74,8 +74,11 @@ function createBackupRouter(db) {
     let imported = 0;
     for (const task of tasks) {
       const title = task.title.trim();
-      const createdAt = isIsoDate(task.created_at) ? task.created_at : new Date().toISOString();
-      if (exists.get(title, createdAt)) {
+      // Solo una fecha que viene en el archivo identifica una tarea ya importada: dos tareas sin fecha y
+      // con el mismo título son tareas distintas, aunque reciban la misma hora.
+      const original = isIsoDate(task.created_at);
+      const createdAt = original ? task.created_at : new Date().toISOString();
+      if (original && exists.get(title, createdAt)) {
         continue;
       }
       insert.run({
@@ -98,7 +101,10 @@ function createBackupRouter(db) {
   router.get('/export', (req, res) => {
     const comments = new Map();
     for (const { task_id: taskId, ...comment } of selectComments.all()) {
-      comments.set(taskId, [...(comments.get(taskId) ?? []), comment]);
+      if (!comments.has(taskId)) {
+        comments.set(taskId, []);
+      }
+      comments.get(taskId).push(comment);
     }
 
     res.attachment(`taskflow-respaldo-${localDate()}.json`);

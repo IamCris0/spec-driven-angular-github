@@ -110,7 +110,7 @@ usuarios trabajando.
 | Variable | Por defecto | Para qué |
 |---|---|---|
 | `BACKUP_DIR` | `backend/backups` | Carpeta de los respaldos |
-| `BACKUP_INTERVAL_HOURS` | `24` | Horas entre copias; `0` solo respalda al arrancar |
+| `BACKUP_INTERVAL_HOURS` | `24` | Horas entre copias, hasta 596; `0` solo respalda al arrancar |
 | `BACKUP_KEEP` | `10` | Copias automáticas que se conservan |
 | `DB_PATH` | `backend/data/taskflow.db` | Archivo de la base |
 

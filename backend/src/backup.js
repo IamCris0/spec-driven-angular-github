@@ -10,6 +10,10 @@ const RESTORE_PREFIX = 'antes-de-restaurar-';
 const BACKUP_PATTERN = new RegExp(`^(${AUTO_PREFIX}|${RESTORE_PREFIX})\\d{4}-.*\\.db$`);
 const AUTO_PATTERN = new RegExp(`^${AUTO_PREFIX}\\d{4}-.*\\.db$`);
 const HOUR_MS = 60 * 60 * 1000;
+// setInterval admite como máximo 2^31 - 1 ms (unas 596 horas); con más, Node lo reduce a 1 ms.
+const MAX_INTERVAL_HOURS = Math.floor((2 ** 31 - 1) / HOUR_MS);
+// Archivos auxiliares de SQLite que acompañan a la base.
+const SIDE_FILES = ['-journal', '-wal', '-shm'];
 
 /** Nombre con la fecha ISO sin ":" ni ".": el orden alfabético coincide con el cronológico. */
 function backupFileName(prefix, date = new Date()) {
@@ -111,6 +115,11 @@ function restoreBackup(
     fs.copyFileSync(target, safetyCopy);
   }
 
+  // Un -journal o -wal de la base anterior (por ejemplo, si la API se cerró a mitad de una escritura) se
+  // aplicaría a la base restaurada al abrirla y la dañaría.
+  for (const suffix of SIDE_FILES) {
+    fs.rmSync(`${target}${suffix}`, { force: true });
+  }
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.copyFileSync(file, target);
   return { restored: target, safetyCopy };
@@ -144,14 +153,15 @@ function startBackupSchedule(db, { dir, intervalHours = 24, keep = 10, log = con
   return schedule;
 }
 
-function readNumber(env, name, fallback, { min, integer }) {
+function readNumber(env, name, fallback, { min, max = Infinity, integer }) {
   const raw = env[name];
   if (raw === undefined || raw === '') {
     return fallback;
   }
   const value = Number(raw);
-  if (!Number.isFinite(value) || value < min || (integer && !Number.isInteger(value))) {
-    throw new Error(`${name} debe ser un número ${integer ? 'entero ' : ''}mayor o igual que ${min}`);
+  if (!Number.isFinite(value) || value < min || value > max || (integer && !Number.isInteger(value))) {
+    const range = max === Infinity ? `mayor o igual que ${min}` : `entre ${min} y ${max}`;
+    throw new Error(`${name} debe ser un número ${integer ? 'entero ' : ''}${range}`);
   }
   return value;
 }
@@ -160,7 +170,11 @@ function readNumber(env, name, fallback, { min, integer }) {
 function backupConfig(env = process.env) {
   return {
     dir: env.BACKUP_DIR ? path.resolve(env.BACKUP_DIR) : DEFAULT_BACKUP_DIR,
-    intervalHours: readNumber(env, 'BACKUP_INTERVAL_HOURS', 24, { min: 0, integer: false }),
+    intervalHours: readNumber(env, 'BACKUP_INTERVAL_HOURS', 24, {
+      min: 0,
+      max: MAX_INTERVAL_HOURS,
+      integer: false,
+    }),
     keep: readNumber(env, 'BACKUP_KEEP', 10, { min: 1, integer: true }),
   };
 }
