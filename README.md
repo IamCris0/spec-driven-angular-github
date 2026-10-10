@@ -134,11 +134,11 @@ archivo, importa todo o nada y omite las que ya existen.
 
 ```bash
 cd backend
-npm test                    # Jest + Supertest con SQLite en memoria (234 pruebas)
+npm test                    # Jest + Supertest con SQLite en memoria (238 pruebas)
 
 cd frontend
 npx ng build                # compilación de producción
-npx ng test --no-watch      # Vitest + jsdom, sin navegador (171 pruebas)
+npx ng test --no-watch      # Vitest + jsdom, sin navegador (173 pruebas)
 ```
 
 Son los mismos pasos que ejecuta el pipeline. Si una prueba falla en local, también fallará en el Pull Request.

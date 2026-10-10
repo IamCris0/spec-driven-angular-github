@@ -23,10 +23,17 @@ function titleValidator(control: AbstractControl<string>) {
 const maxLength = (max: number, message: string) => (control: AbstractControl<string>) =>
   control.value.trim().length > max ? { message } : null;
 
-// El input de fecha ya garantiza el formato AAAA-MM-DD; aquí solo se comprueba el rango.
+// El input de fecha admite años de cinco cifras, que como texto quedarían dentro del rango: primero se
+// exige el formato AAAA-MM-DD, igual que la API.
 function dueDateValidator(control: AbstractControl<string>) {
   const value = control.value;
-  return value && (value < MIN_DUE_DATE || value > MAX_DUE_DATE)
+  if (!value) {
+    return null;
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return { message: 'La fecha límite no es válida' };
+  }
+  return value < MIN_DUE_DATE || value > MAX_DUE_DATE
     ? { message: 'La fecha límite debe estar entre los años 2000 y 2099' }
     : null;
 }

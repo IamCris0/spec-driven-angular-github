@@ -204,8 +204,8 @@ Comprobación de [`003-respaldos-validaciones/spec.md`](../specs/003-respaldos-v
 | Tipo | Herramienta | Resultado |
 |---|---|---|
 | Pipeline | GitHub Actions en el PR #39 (run 38091312816) | `backend` y `frontend` en verde |
-| Pruebas de la API | Jest + Supertest | 234 en verde (80 nuevas); cobertura del 99 % de las líneas y del 89 % de las ramas |
-| Pruebas del frontend | Vitest + jsdom | 171 en verde (33 nuevas) |
+| Pruebas de la API | Jest + Supertest | 238 en verde (84 nuevas); cobertura del 99 % de las líneas y del 89 % de las ramas |
+| Pruebas del frontend | Vitest + jsdom | 173 en verde (35 nuevas) |
 | Compilación | `ng build` | Sin errores ni avisos |
 | `npm audit` | `backend` y `frontend` | 0 vulnerabilidades |
 | Punta a punta | API real + `ng serve` + navegador | Todos los escenarios en verde (ver abajo) |
@@ -243,7 +243,14 @@ Recorridos de punta a punta:
 | CE-010 Exportar e importar reproduce las mismas tareas | Prueba que exporta de una instalación e importa en otra vacía y compara los siete campos | Cumple |
 | CE-011 Historias nuevas con pruebas en GitHub Actions | Jobs `backend` y `frontend` en verde en el PR #39 (run 38091312816), con las 80 pruebas nuevas de la API y las 33 del frontend | Cumple |
 
-## Hallazgo corregido durante la verificación
+## Hallazgos corregidos durante la verificación y la revisión del PR #39
+
+La revisión de código del PR (asistida por IA, ver el comentario del PR) encontró seis problemas, corregidos con
+sus pruebas: `BACKUP_INTERVAL_HOURS` mayor que 596 desbordaba `setInterval` y la API respaldaba cada milisegundo;
+restaurar dejaba el `-journal` de la base anterior, que SQLite habría aplicado a la base restaurada; dos tareas sin
+fecha y con el mismo título se tomaban por duplicadas al importar; el formulario aceptaba años de cinco cifras;
+elegir dos archivos seguidos podía mostrar la vista previa del primero; y exportar copiaba arreglos en cada
+comentario.
 
 Con el tercer enlace ("Respaldos"), la barra superior medía 415 px en una pantalla de 375 px y el botón "Cerrar
 sesión" quedaba fuera. Ahora, por debajo de 640 px, los enlaces muestran solo su ícono (el nombre sigue disponible

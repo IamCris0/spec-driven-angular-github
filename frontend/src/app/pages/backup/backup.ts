@@ -40,6 +40,8 @@ export class Backup {
   protected readonly error = signal<string | null>(null);
   protected readonly success = signal<string | null>(null);
   protected readonly tasks = tasks;
+  // Cada elección de archivo recibe un número: una lectura que termina tarde no pisa a una más nueva.
+  private selection = 0;
 
   protected download(): void {
     this.exporting.set(true);
@@ -68,6 +70,7 @@ export class Backup {
   protected async choose(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
+    const current = ++this.selection;
     this.pending.set(null);
     this.error.set(null);
     this.success.set(null);
@@ -80,6 +83,9 @@ export class Backup {
     }
 
     const result = parseBackup(await file.text());
+    if (current !== this.selection) {
+      return;
+    }
     if ('error' in result) {
       this.error.set(result.error);
     } else {
