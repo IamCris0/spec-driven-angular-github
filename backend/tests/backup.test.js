@@ -7,6 +7,7 @@ const {
   backupFileName,
   createBackup,
   listBackups,
+  markApiRunning,
   pruneBackups,
   restoreBackup,
   startBackupSchedule,
@@ -228,6 +229,29 @@ describe('respaldos de la base de datos', () => {
       restored.close();
     });
 
+    it('se niega a restaurar mientras la API está en marcha', async () => {
+      const target = path.join(dir, 'taskflow.db');
+      const backup = await createBackup(db, { dir: backupsDir() });
+      db.close();
+      const before = fs.readFileSync(target);
+      // Este mismo proceso de Jest hace de API en marcha.
+      fs.writeFileSync(`${target}.pid`, String(process.pid));
+
+      expect(() => restoreBackup(backup, { target, dir: backupsDir() })).toThrow(
+        `La API está en marcha (proceso ${process.pid}): detenla antes de restaurar`,
+      );
+      expect(fs.readFileSync(target).equals(before)).toBe(true);
+    });
+
+    it('ignora el archivo .pid que dejó una API que ya no corre', async () => {
+      const target = path.join(dir, 'taskflow.db');
+      const backup = await createBackup(db, { dir: backupsDir() });
+      db.close();
+      fs.writeFileSync(`${target}.pid`, '2147483646');
+
+      expect(() => restoreBackup(backup, { target, dir: backupsDir() })).not.toThrow();
+    });
+
     it('no toca la base actual si el respaldo no es válido', () => {
       const target = path.join(dir, 'taskflow.db');
       db.close();
@@ -294,6 +318,18 @@ describe('respaldos de la base de datos', () => {
     });
   });
 
+  describe('markApiRunning', () => {
+    it('escribe el PID junto a la base y lo borra al terminar', () => {
+      const target = path.join(dir, 'taskflow.db');
+
+      const release = markApiRunning(target);
+      expect(fs.readFileSync(`${target}.pid`, 'utf8')).toBe(String(process.pid));
+      release();
+
+      expect(fs.existsSync(`${target}.pid`)).toBe(false);
+    });
+  });
+
   describe('backupConfig', () => {
     it('usa 24 horas y 10 copias por defecto', () => {
       const config = backupConfig({});
@@ -308,7 +344,8 @@ describe('respaldos de la base de datos', () => {
       ).toEqual({ dir: path.resolve('/tmp/r'), intervalHours: 6, keep: 3 });
     });
 
-    it('acepta hasta 596 horas', () => {
+    it('acepta de 0,1 a 596 horas', () => {
+      expect(backupConfig({ BACKUP_INTERVAL_HOURS: '0.1' }).intervalHours).toBe(0.1);
       expect(backupConfig({ BACKUP_INTERVAL_HOURS: '596' }).intervalHours).toBe(596);
     });
 
@@ -321,6 +358,8 @@ describe('respaldos de la base de datos', () => {
       ['BACKUP_INTERVAL_HOURS', '-1'],
       // setInterval no admite más de 2^31 - 1 ms (unas 596 horas): con más, Node dispara cada 1 ms.
       ['BACKUP_INTERVAL_HOURS', '600'],
+      // Revisión de Copilot: un intervalo diminuto también respaldaría casi cada milisegundo.
+      ['BACKUP_INTERVAL_HOURS', '0.05'],
       ['BACKUP_KEEP', '0'],
       ['BACKUP_KEEP', '2.5'],
     ])('rechaza %s=%s con un mensaje claro', (name, value) => {
