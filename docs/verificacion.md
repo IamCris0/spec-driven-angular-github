@@ -189,3 +189,68 @@ CE-004 sigue sin cumplirse: `main` y `develop` siguen sin protección de ramas p
   distintas).
 - El token se guarda en `localStorage`; el plan de la v2 explica por qué se acepta y cuál sería la alternativa en
   producción.
+
+---
+
+# Verificación de TaskFlow v3 (T052)
+
+Comprobación de [`003-respaldos-validaciones/spec.md`](../specs/003-respaldos-validaciones/spec.md) contra la rama
+`feature/013-respaldos-validaciones` (issue #32).
+
+**Fecha**: 2026-10-10
+
+## Cómo se verificó
+
+| Tipo | Herramienta | Resultado |
+|---|---|---|
+| Pruebas de la API | Jest + Supertest | 234 en verde (80 nuevas); cobertura del 99 % de las líneas y del 89 % de las ramas |
+| Pruebas del frontend | Vitest + jsdom | 171 en verde (33 nuevas) |
+| Compilación | `ng build` | Sin errores ni avisos |
+| `npm audit` | `backend` y `frontend` | 0 vulnerabilidades |
+| Punta a punta | API real + `ng serve` + navegador | Todos los escenarios en verde (ver abajo) |
+
+Recorridos de punta a punta:
+
+- **Respaldo automático**: al arrancar, la API creó `taskflow-<fecha>.db` en la carpeta de respaldos.
+- **Restauración (CE-009)**: con 4 tareas, un comentario y una cuenta, `npm run backup` con la API en marcha; se
+  detuvo la API, se **borró** la base, `npm run restore` listó los respaldos y `npm run restore -- <nombre>` la
+  recuperó. Desde detener la API hasta terminar la restauración pasaron **2 segundos**. Al volver a arrancar, la
+  cuenta inició sesión y estaban las 4 tareas con su comentario.
+- **Exportar e importar**: se exportaron 3 tareas, se borraron todas, se eligió el archivo en "Respaldos" (vista
+  previa: "El archivo tiene 3 tareas · exportado por Ana Torres") y se importaron. Al importar otra vez el mismo
+  archivo no se duplicó nada.
+- **Validaciones**: registro con "solo-letras" → "La contraseña debe incluir letras y números"; fecha límite
+  `1990-01-01` → 400; cuerpo `title=form` → 415; cabeceras `X-Content-Type-Options`, `X-Frame-Options` y
+  `Referrer-Policy` presentes también en las respuestas 401.
+- **Móvil**: 375 px exactos en "Respaldos" y en el tablero con la barra superior de tres enlaces.
+
+## Historias de usuario
+
+| Historia | Evidencia | Estado |
+|---|---|---|
+| H15 Respaldo automático (P1) | `backup.test.js` (copia, rotación, programación, fallo sin detener la API), punta a punta | Cumple |
+| H16 Respaldo manual y restauración (P1) | `backup.test.js` (validación y restauración), `backup-cli.test.js`, punta a punta | Cumple |
+| H17 Exportar las tareas (P2) | `backup-routes.test.js`, `backup.service.spec.ts`, `backup.spec.ts`, punta a punta | Cumple |
+| H18 Importar tareas (P2) | `backup-routes.test.js` (atómico, sin duplicados, 9 casos inválidos), `backup.spec.ts`, punta a punta | Cumple |
+| H19 Validaciones más estrictas (P1) | `validation.test.js`, `task-form.spec.ts`, `register.spec.ts`, punta a punta | Cumple |
+
+## Criterios de éxito
+
+| Criterio | Resultado | Estado |
+|---|---|---|
+| CE-009 Recuperar el tablero con `npm run restore` en menos de 2 minutos | 2 segundos tras borrar la base (ver arriba) | Cumple |
+| CE-010 Exportar e importar reproduce las mismas tareas | Prueba que exporta de una instalación e importa en otra vacía y compara los siete campos | Cumple |
+| CE-011 Historias nuevas con pruebas en GitHub Actions | Las pruebas nuevas corren en los jobs `backend` y `frontend`; se confirma en el PR de esta rama | Pendiente del pipeline del PR |
+
+## Hallazgo corregido durante la verificación
+
+Con el tercer enlace ("Respaldos"), la barra superior medía 415 px en una pantalla de 375 px y el botón "Cerrar
+sesión" quedaba fuera. Ahora, por debajo de 640 px, los enlaces muestran solo su ícono (el nombre sigue disponible
+para lectores de pantalla y como `title`).
+
+## Limitaciones conocidas de la v3
+
+- Los respaldos se guardan en el mismo disco que la base: protegen de borrados y errores, no de que se dañe el
+  disco. En producción la carpeta se copiaría a otro servidor o a la nube.
+- Para restaurar hay que detener la API.
+- Importar no recupera los comentarios (ver "Fuera de alcance" en la especificación); la copia de la base sí.
