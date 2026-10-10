@@ -76,7 +76,7 @@ chore: actualiza dependencias
 
 ## 4. Pull Requests y Code Review
 
-Cada PR debe:
+Cada PR debe (la [plantilla](../.github/pull_request_template.md) ya trae estos apartados):
 - Referenciar su Issue (`Closes #12`).
 - Explicar qué cambia y cómo probarlo.
 - Indicar si se usó IA (Copilot) y qué partes se revisaron manualmente.
@@ -97,6 +97,24 @@ En **Settings → Branches → Add rule** para `main` y `develop`:
 
 ## 6. Gestión del proyecto
 
-- **Issues**: una por cada fase de `tasks.md`, con etiquetas `feature`, `bug`, `docs`, `ci`.
+- **Issues**: una por cada fase de `tasks.md`, con etiquetas `feature`, `bug`, `docs`, `ci` y `gestion`. Las
+  [plantillas](../.github/ISSUE_TEMPLATE/) piden la historia de usuario y sus escenarios de aceptación (o los pasos
+  para reproducir un error).
 - **Projects (Kanban)**: columnas *Por hacer*, *En progreso*, *En revisión*, *Hecho*.
 - **Milestones**: `v0.1 – Especificaciones`, `v0.2 – MVP`, `v1.0 – Entrega final`.
+
+## 7. Automatización de dependencias
+
+[Dependabot](../.github/dependabot.yml) revisa cada semana las dependencias del backend, del frontend y de las
+acciones de GitHub, y abre Pull Requests hacia `develop` con la etiqueta `ci`. Esos PR pasan por el mismo pipeline
+y la misma revisión que cualquier otro cambio: así las alertas de seguridad no se acumulan.
+
+## 8. Estado real del proceso
+
+Este documento describe el flujo al que apunta el equipo. Lo que se cumplió y lo que no queda registrado, sin
+maquillar, en [`verificacion.md`](verificacion.md):
+
+- Las issues de las Fases 1 a 9 y del mantenimiento (#21 a #31) se crearon **después** de hacer el trabajo, para que
+  cada fase quedara trazada con su PR. Desde la v3 (#32) la issue va primero.
+- Hasta el PR #20 ningún PR tuvo revisión y `main` recibió dos push directos: CE-004 no se cumple mientras las
+  ramas no estén protegidas (issue #36).
