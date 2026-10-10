@@ -1,6 +1,7 @@
 const crypto = require('node:crypto');
 const { createApp } = require('./app');
-const { createDb } = require('./db');
+const { backupConfig, startBackupSchedule } = require('./backup');
+const { createDb, DEFAULT_DB_PATH } = require('./db');
 
 const PORT = process.env.PORT || 3000;
 
@@ -17,6 +18,13 @@ function resolveJwtSecret() {
   return crypto.randomBytes(32).toString('hex');
 }
 
-createApp(createDb(), { jwtSecret: resolveJwtSecret() }).listen(PORT, () => {
+const jwtSecret = resolveJwtSecret();
+const backups = backupConfig();
+const db = createDb(process.env.DB_PATH || DEFAULT_DB_PATH);
+
+// Respaldo al arrancar y cada BACKUP_INTERVAL_HOURS horas (specs/003-respaldos-validaciones, H15).
+startBackupSchedule(db, backups);
+
+createApp(db, { jwtSecret }).listen(PORT, () => {
   console.log(`API de TaskFlow escuchando en http://localhost:${PORT}/api`);
 });

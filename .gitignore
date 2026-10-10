@@ -13,6 +13,9 @@ coverage/
 
 # Base de datos local de SQLite (backend/data/taskflow.db)
 backend/data/
+
+# Respaldos de la base (npm run backup y respaldo automático de la API)
+backend/backups/
 *.db
 *.db-journal
 *.db-shm
