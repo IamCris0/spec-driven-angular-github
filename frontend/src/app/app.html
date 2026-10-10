@@ -19,21 +19,67 @@
     </a>
 
     @if (auth.user()) {
-      <nav class="ml-2 flex items-center gap-1 text-sm font-medium sm:ml-4">
+      <!-- En pantallas pequeñas solo se ven los íconos, para que la barra quepa en 375 px (CE-008). -->
+      <nav class="ml-1 flex items-center gap-1 text-sm font-medium sm:ml-4">
         <a
           routerLink="/"
           routerLinkActive="bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
           [routerLinkActiveOptions]="{ exact: true }"
-          class="rounded-lg px-3 py-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+          class="flex items-center gap-2 rounded-lg p-2 text-slate-600 hover:text-slate-900 sm:px-3 dark:text-slate-400 dark:hover:text-white"
+          title="Tablero"
         >
-          Tablero
+          <svg
+            class="size-5 sm:hidden"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <path d="M9 4v16M15 4v16" />
+          </svg>
+          <span class="sr-only sm:not-sr-only">Tablero</span>
         </a>
         <a
           routerLink="/estadisticas"
           routerLinkActive="bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
-          class="rounded-lg px-3 py-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+          class="flex items-center gap-2 rounded-lg p-2 text-slate-600 hover:text-slate-900 sm:px-3 dark:text-slate-400 dark:hover:text-white"
+          title="Estadísticas"
         >
-          Estadísticas
+          <svg
+            class="size-5 sm:hidden"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path stroke-linecap="round" d="M4 20h16M7 16v-5m5 5V6m5 10v-8" />
+          </svg>
+          <span class="sr-only sm:not-sr-only">Estadísticas</span>
+        </a>
+        <a
+          routerLink="/respaldos"
+          routerLinkActive="bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
+          class="flex items-center gap-2 rounded-lg p-2 text-slate-600 hover:text-slate-900 sm:px-3 dark:text-slate-400 dark:hover:text-white"
+          title="Respaldos"
+        >
+          <svg
+            class="size-5 sm:hidden"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M4 7h16v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7Zm-1-3h18v3H3V4Zm7 7h4"
+            />
+          </svg>
+          <span class="sr-only sm:not-sr-only">Respaldos</span>
         </a>
       </nav>
     }

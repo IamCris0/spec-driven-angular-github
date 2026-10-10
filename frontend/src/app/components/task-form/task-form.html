@@ -20,7 +20,15 @@
   </div>
 
   <div>
-    <label class="label" [for]="'description-' + formId">Descripción</label>
+    <div class="flex items-baseline justify-between gap-2">
+      <label class="label" [for]="'description-' + formId">Descripción</label>
+      <span
+        class="text-xs text-slate-500 tabular-nums dark:text-slate-400"
+        data-counter="description"
+        [class.text-rose-600]="form.controls.description.value.length > maxDescription"
+        >{{ form.controls.description.value.length }}/{{ maxDescription }}</span
+      >
+    </div>
     <textarea
       class="input resize-y"
       [id]="'description-' + formId"
@@ -28,6 +36,9 @@
       formControlName="description"
       placeholder="Detalles opcionales"
     ></textarea>
+    @if (message('description'); as text) {
+      <p class="field-error" data-error="description">{{ text }}</p>
+    }
   </div>
 
   <div class="grid grid-cols-2 gap-3">
@@ -51,10 +62,23 @@
       />
     </div>
   </div>
+  @if (message('assignee'); as text) {
+    <p class="field-error" data-error="assignee">{{ text }}</p>
+  }
 
   <div>
     <label class="label" [for]="'due-' + formId">Fecha límite</label>
-    <input class="input" [id]="'due-' + formId" type="date" formControlName="due_date" />
+    <input
+      class="input"
+      [id]="'due-' + formId"
+      type="date"
+      formControlName="due_date"
+      [min]="minDueDate"
+      [max]="maxDueDate"
+    />
+    @if (message('due_date'); as text) {
+      <p class="field-error" data-error="due_date">{{ text }}</p>
+    }
   </div>
 
   <div class="flex gap-2">
