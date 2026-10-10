@@ -119,6 +119,32 @@ describe('Backup', () => {
       expect(button('import')).toBeNull();
     });
 
+    it('si se eligen dos archivos seguidos, se queda con el último aunque el primero tarde más en leerse', async () => {
+      const input = root.querySelector<HTMLInputElement>('input[type="file"]')!;
+      const pick = (file: File) => {
+        Object.defineProperty(input, 'files', { value: [file], configurable: true });
+        input.dispatchEvent(new Event('change'));
+      };
+      let finishSlow!: (text: string) => void;
+      const slow = new File(['x'], 'lento.json');
+      Object.defineProperty(slow, 'text', {
+        value: () => new Promise<string>((resolve) => (finishSlow = resolve)),
+      });
+      const fast = new File(
+        [JSON.stringify({ ...BACKUP, tasks: [{ title: 'Una' }] })],
+        'rapido.json',
+      );
+
+      pick(slow);
+      pick(fast);
+      await new Promise((resolve) => setTimeout(resolve));
+      finishSlow(JSON.stringify(BACKUP));
+      await new Promise((resolve) => setTimeout(resolve));
+      await fixture.whenStable();
+
+      expect(button('import')?.textContent).toContain('Importar 1 tarea');
+    });
+
     it('rechaza archivos de más de 2 MB sin leerlos', async () => {
       await choose(JSON.stringify(BACKUP), 'grande.json', 3 * 1024 * 1024);
 

@@ -182,8 +182,7 @@ describe('TaskForm: validaciones de la v3', () => {
   let saved: TaskInput[];
 
   const field = (name: string) => root.querySelector(`[formcontrolname="${name}"]`);
-  const error = (name: string) =>
-    root.querySelector(`[data-error="${name}"]`)?.textContent?.trim();
+  const error = (name: string) => root.querySelector(`[data-error="${name}"]`)?.textContent?.trim();
 
   async function submitWith(values: Record<string, string>): Promise<void> {
     type(field('title'), 'Tarea');
@@ -213,6 +212,17 @@ describe('TaskForm: validaciones de la v3', () => {
     expect(saved).toEqual([]);
   });
 
+  it('rechaza un año de cinco cifras con el mismo mensaje que la API', async () => {
+    // Los navegadores permiten escribir años de 5 cifras; como texto, "20000-01-01" < "2099-12-31".
+    type(field('title'), 'Tarea');
+    fixture.componentInstance['form'].controls.due_date.setValue('20000-01-01');
+    root.querySelector('form')!.dispatchEvent(new Event('submit'));
+    await fixture.whenStable();
+
+    expect(error('due_date')).toBe('La fecha límite no es válida');
+    expect(saved).toEqual([]);
+  });
+
   it('acepta los valores límite', async () => {
     await submitWith({
       description: 'd'.repeat(1000),
@@ -228,9 +238,7 @@ describe('TaskForm: validaciones de la v3', () => {
     type(field('description'), 'Hola');
     await fixture.whenStable();
 
-    expect(root.querySelector('[data-counter="description"]')?.textContent?.trim()).toBe(
-      '4/1000',
-    );
+    expect(root.querySelector('[data-counter="description"]')?.textContent?.trim()).toBe('4/1000');
   });
 
   it('limita el selector de fecha a los años 2000-2099', () => {
