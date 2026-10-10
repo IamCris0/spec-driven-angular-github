@@ -1,5 +1,6 @@
 const express = require('express');
 const { createAuth } = require('./auth');
+const { createBackupRouter } = require('./backup.routes');
 const { createCommentsRepository } = require('./comments.repository');
 const { createStatsRouter } = require('./stats.routes');
 const { createTasksRepository } = require('./tasks.repository');
@@ -8,6 +9,7 @@ const { createUsersRepository } = require('./users.repository');
 
 // Origen del frontend de Angular durante el desarrollo (ng serve).
 const FRONTEND_ORIGIN = 'http://localhost:4200';
+const BACKUP_BODY_LIMIT = '2mb';
 
 const CLIENT_ERROR_MESSAGES = {
   'entity.parse.failed': 'El cuerpo de la petición no es un JSON válido',
@@ -87,6 +89,14 @@ function createApp(db, { jwtSecret, bcryptRounds = 10 } = {}) {
   app.use(securityHeaders);
   app.use(cors);
   app.use(requireJsonBody);
+  // Los respaldos pueden pesar hasta 2 MB; el resto de la API se queda con el límite de 100 KB. Va antes
+  // del express.json() general y comprueba la sesión antes de leer el cuerpo.
+  app.use(
+    '/api/backup',
+    auth.requireAuth,
+    express.json({ limit: BACKUP_BODY_LIMIT }),
+    createBackupRouter(db),
+  );
   app.use(express.json());
   app.use('/api/auth', auth.router);
   app.use(

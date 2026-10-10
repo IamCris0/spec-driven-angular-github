@@ -170,4 +170,4 @@ function createTasksRouter(repository, comments) {
   return router;
 }
 
-module.exports = { createTasksRouter };
+module.exports = { createTasksRouter, validateTaskInput, blankToNull, STATUSES };
