@@ -145,6 +145,15 @@ describe('API de respaldos JSON', () => {
       expect(count()).toBe(2);
     });
 
+    it('no confunde tareas con el mismo título cuando no traen created_at', async () => {
+      const res = await api
+        .post('/api/backup/import')
+        .send(backupOf([{ title: 'Revisar' }, { title: 'Revisar' }, { title: 'Revisar' }]));
+
+      expect(res.body).toEqual({ imported: 3, skipped: 0 });
+      expect(count()).toBe(3);
+    });
+
     it('exportar e importar en otra instalación reproduce las mismas tareas (CE-010)', async () => {
       await create({ title: 'A', description: 'd', priority: 'alta', assignee: 'Ana' });
       const b = await create({ title: 'B', due_date: '2026-12-01' });
@@ -241,7 +250,7 @@ describe('API de respaldos JSON', () => {
     it('comprueba la sesión antes de leer el cuerpo', async () => {
       const res = await request(app)
         .post('/api/backup/import')
-        .send(backupOf([{ title: 'x', description: 'y'.repeat(500 * 1024) }]));
+        .send(backupOf([{ title: 'x', description: 'y'.repeat(150 * 1024) }]));
 
       expect(res.status).toBe(401);
       expect(count()).toBe(0);

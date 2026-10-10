@@ -209,6 +209,25 @@ describe('respaldos de la base de datos', () => {
       expect(fs.existsSync(target)).toBe(true);
     });
 
+    it('borra los archivos -journal, -wal y -shm de la base anterior', async () => {
+      const target = path.join(dir, 'taskflow.db');
+      const backup = await createBackup(db, { dir: backupsDir() });
+      db.close();
+      // Restos de una API que se cerró a mitad de una escritura: SQLite los aplicaría a la base restaurada.
+      for (const suffix of ['-journal', '-wal', '-shm']) {
+        fs.writeFileSync(`${target}${suffix}`, 'restos de la base anterior');
+      }
+
+      restoreBackup(backup, { target, dir: backupsDir() });
+
+      for (const suffix of ['-journal', '-wal', '-shm']) {
+        expect(fs.existsSync(`${target}${suffix}`)).toBe(false);
+      }
+      const restored = new Database(target, { readonly: true });
+      expect(restored.prepare('SELECT title FROM tasks').get().title).toBe('Tarea original');
+      restored.close();
+    });
+
     it('no toca la base actual si el respaldo no es válido', () => {
       const target = path.join(dir, 'taskflow.db');
       db.close();
@@ -289,6 +308,10 @@ describe('respaldos de la base de datos', () => {
       ).toEqual({ dir: path.resolve('/tmp/r'), intervalHours: 6, keep: 3 });
     });
 
+    it('acepta hasta 596 horas', () => {
+      expect(backupConfig({ BACKUP_INTERVAL_HOURS: '596' }).intervalHours).toBe(596);
+    });
+
     it('acepta 0 horas para desactivar el intervalo', () => {
       expect(backupConfig({ BACKUP_INTERVAL_HOURS: '0' }).intervalHours).toBe(0);
     });
@@ -296,6 +319,8 @@ describe('respaldos de la base de datos', () => {
     it.each([
       ['BACKUP_INTERVAL_HOURS', 'mucho'],
       ['BACKUP_INTERVAL_HOURS', '-1'],
+      // setInterval no admite más de 2^31 - 1 ms (unas 596 horas): con más, Node dispara cada 1 ms.
+      ['BACKUP_INTERVAL_HOURS', '600'],
       ['BACKUP_KEEP', '0'],
       ['BACKUP_KEEP', '2.5'],
     ])('rechaza %s=%s con un mensaje claro', (name, value) => {
