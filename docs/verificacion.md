@@ -203,6 +203,7 @@ Comprobación de [`003-respaldos-validaciones/spec.md`](../specs/003-respaldos-v
 
 | Tipo | Herramienta | Resultado |
 |---|---|---|
+| Pipeline | GitHub Actions en el PR #39 (run 38091312816) | `backend` y `frontend` en verde |
 | Pruebas de la API | Jest + Supertest | 234 en verde (80 nuevas); cobertura del 99 % de las líneas y del 89 % de las ramas |
 | Pruebas del frontend | Vitest + jsdom | 171 en verde (33 nuevas) |
 | Compilación | `ng build` | Sin errores ni avisos |
@@ -240,7 +241,7 @@ Recorridos de punta a punta:
 |---|---|---|
 | CE-009 Recuperar el tablero con `npm run restore` en menos de 2 minutos | 2 segundos tras borrar la base (ver arriba) | Cumple |
 | CE-010 Exportar e importar reproduce las mismas tareas | Prueba que exporta de una instalación e importa en otra vacía y compara los siete campos | Cumple |
-| CE-011 Historias nuevas con pruebas en GitHub Actions | Las pruebas nuevas corren en los jobs `backend` y `frontend`; se confirma en el PR de esta rama | Pendiente del pipeline del PR |
+| CE-011 Historias nuevas con pruebas en GitHub Actions | Jobs `backend` y `frontend` en verde en el PR #39 (run 38091312816), con las 80 pruebas nuevas de la API y las 33 del frontend | Cumple |
 
 ## Hallazgo corregido durante la verificación
 
