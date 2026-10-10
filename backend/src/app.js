@@ -29,6 +29,27 @@ function cors(req, res, next) {
   next();
 }
 
+// Cabeceras de seguridad básicas (specs/003-respaldos-validaciones, RF-024): el navegador no adivina el
+// tipo de las respuestas, la API no se puede incrustar en un iframe y no se filtra la URL de origen.
+function securityHeaders(req, res, next) {
+  res.set({
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'no-referrer',
+  });
+  next();
+}
+
+// Las rutas solo entienden JSON. Una petición sin Content-Type (sin cuerpo) se deja pasar: la validación
+// de cada ruta responde 400 con el campo que falta.
+function requireJsonBody(req, res, next) {
+  const hasType = Boolean(req.get('Content-Type'));
+  if (['POST', 'PUT', 'PATCH'].includes(req.method) && hasType && !req.is('application/json')) {
+    return res.status(415).json({ error: 'El cuerpo de la petición debe ser JSON' });
+  }
+  next();
+}
+
 function notFound(req, res) {
   res.status(404).json({ error: 'Recurso no encontrado' });
 }
@@ -62,7 +83,10 @@ function createApp(db, { jwtSecret, bcryptRounds = 10 } = {}) {
   const app = express();
   const auth = createAuth({ users: createUsersRepository(db), jwtSecret, bcryptRounds });
 
+  app.disable('x-powered-by');
+  app.use(securityHeaders);
   app.use(cors);
+  app.use(requireJsonBody);
   app.use(express.json());
   app.use('/api/auth', auth.router);
   app.use(
