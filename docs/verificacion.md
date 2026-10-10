@@ -204,7 +204,7 @@ Comprobación de [`003-respaldos-validaciones/spec.md`](../specs/003-respaldos-v
 | Tipo | Herramienta | Resultado |
 |---|---|---|
 | Pipeline | GitHub Actions en el PR #39 (run 38091312816) | `backend` y `frontend` en verde |
-| Pruebas de la API | Jest + Supertest | 238 en verde (84 nuevas); cobertura del 99 % de las líneas y del 89 % de las ramas |
+| Pruebas de la API | Jest + Supertest | 242 en verde (88 nuevas); cobertura del 99 % de las líneas y del 89 % de las ramas |
 | Pruebas del frontend | Vitest + jsdom | 173 en verde (35 nuevas) |
 | Compilación | `ng build` | Sin errores ni avisos |
 | `npm audit` | `backend` y `frontend` | 0 vulnerabilidades |
@@ -251,6 +251,13 @@ restaurar dejaba el `-journal` de la base anterior, que SQLite habría aplicado 
 fecha y con el mismo título se tomaban por duplicadas al importar; el formulario aceptaba años de cinco cifras;
 elegir dos archivos seguidos podía mostrar la vista previa del primero; y exportar copiaba arreglos en cada
 comentario.
+
+Después se pidió una segunda revisión a **GitHub Copilot Chat** (plan Free) sobre `backend/src/backup.js`. De sus
+cinco observaciones, dos eran válidas y se corrigieron con pruebas: restaurar con la API en marcha (ahora la API
+deja un archivo `.pid` y `restore` se niega) y un intervalo diminuto, que también respaldaría casi cada
+milisegundo (mínimo 0,1 horas). Las otras tres eran falsos positivos: no hay promesas sin manejar, copiar el
+`-wal` después de `db.backup()` dañaría el respaldo y cerrar una conexión de solo lectura no falla. Es un ejemplo
+del Principio VI: la IA asiste, pero cada sugerencia se verifica antes de aplicarla.
 
 Con el tercer enlace ("Respaldos"), la barra superior medía 415 px en una pantalla de 375 px y el botón "Cerrar
 sesión" quedaba fuera. Ahora, por debajo de 640 px, los enlaces muestran solo su ícono (el nombre sigue disponible

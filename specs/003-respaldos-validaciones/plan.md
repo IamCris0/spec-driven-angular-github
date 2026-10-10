@@ -28,11 +28,12 @@ usuarios, y Node trae `fs` para copiar y rotar archivos.
 |---|---|
 | Carpeta | `backend/backups/` (variable `BACKUP_DIR`); Git la ignora |
 | Nombre | `taskflow-<fecha ISO con guiones>.db`, por ejemplo `taskflow-2026-10-10T17-05-03-123Z.db`; el orden alfabético es el cronológico |
-| Cuándo | Al arrancar y cada `BACKUP_INTERVAL_HOURS` horas (24 por defecto, máximo 596 porque `setInterval` no admite más; `0` desactiva el intervalo) |
+| Cuándo | Al arrancar y cada `BACKUP_INTERVAL_HOURS` horas (24 por defecto, de 0,1 a 596 porque `setInterval` no admite más y un intervalo diminuto llenaría el disco; `0` desactiva el intervalo) |
 | Rotación | Se conservan las últimas `BACKUP_KEEP` copias automáticas (10 por defecto) |
 | Errores | Se registran en consola; nunca detienen la API. El temporizador usa `unref()` para no impedir que el proceso termine |
 | `npm run backup` | Crea una copia y muestra su ruta |
 | `npm run restore` | Sin argumentos lista los respaldos; con un archivo (ruta o nombre dentro de la carpeta) lo valida, guarda la base actual como `antes-de-restaurar-<fecha>.db` y la reemplaza |
+| API en marcha | La API escribe su PID en `<base>.pid` y lo borra al cerrarse; `restore` se niega si ese proceso sigue vivo e ignora un archivo viejo |
 | Archivos auxiliares | Al restaurar se borran los `-journal`, `-wal` y `-shm` de la base anterior: SQLite los aplicaría a la base restaurada |
 | Validación al restaurar | Se abre en solo lectura: `PRAGMA integrity_check` = `ok`, existe la tabla `tasks` y `user_version` no supera la versión del esquema actual |
 

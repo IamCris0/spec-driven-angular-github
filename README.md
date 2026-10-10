@@ -110,7 +110,7 @@ usuarios trabajando.
 | Variable | Por defecto | Para qué |
 |---|---|---|
 | `BACKUP_DIR` | `backend/backups` | Carpeta de los respaldos |
-| `BACKUP_INTERVAL_HOURS` | `24` | Horas entre copias, hasta 596; `0` solo respalda al arrancar |
+| `BACKUP_INTERVAL_HOURS` | `24` | Horas entre copias, de 0,1 a 596; `0` solo respalda al arrancar |
 | `BACKUP_KEEP` | `10` | Copias automáticas que se conservan |
 | `DB_PATH` | `backend/data/taskflow.db` | Archivo de la base |
 
@@ -123,7 +123,8 @@ npm run restore -- <nombre.db>     # restaura uno: primero detén la API
 ```
 
 Antes de reemplazar la base, `restore` comprueba que el archivo sea una base de TaskFlow sana y guarda la actual
-como `antes-de-restaurar-<fecha>.db` (esas copias nunca se borran solas). Un respaldo de la v1 o la v2 se
+como `antes-de-restaurar-<fecha>.db` (esas copias nunca se borran solas). Mientras la API está en marcha deja un
+archivo `taskflow.db.pid`, y `restore` se niega a reemplazar la base si ese proceso sigue vivo. Un respaldo de la v1 o la v2 se
 actualiza solo al arrancar.
 
 **En JSON, desde la interfaz.** En la página **Respaldos**, "Descargar respaldo" baja todas las tareas y sus
@@ -134,7 +135,7 @@ archivo, importa todo o nada y omite las que ya existen.
 
 ```bash
 cd backend
-npm test                    # Jest + Supertest con SQLite en memoria (238 pruebas)
+npm test                    # Jest + Supertest con SQLite en memoria (242 pruebas)
 
 cd frontend
 npx ng build                # compilación de producción

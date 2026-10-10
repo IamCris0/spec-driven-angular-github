@@ -12,6 +12,8 @@ const AUTO_PATTERN = new RegExp(`^${AUTO_PREFIX}\\d{4}-.*\\.db$`);
 const HOUR_MS = 60 * 60 * 1000;
 // setInterval admite como máximo 2^31 - 1 ms (unas 596 horas); con más, Node lo reduce a 1 ms.
 const MAX_INTERVAL_HOURS = Math.floor((2 ** 31 - 1) / HOUR_MS);
+// Un intervalo diminuto llenaría el disco igual que uno desbordado: el mínimo es 6 minutos.
+const MIN_INTERVAL_HOURS = 0.1;
 // Archivos auxiliares de SQLite que acompañan a la base.
 const SIDE_FILES = ['-journal', '-wal', '-shm'];
 
@@ -95,6 +97,38 @@ function validateBackupFile(file) {
   }
 }
 
+const pidFile = (dbPath) => `${dbPath}.pid`;
+
+/**
+ * Marca que una API usa esta base escribiendo su PID junto a ella. Devuelve la función que borra la marca,
+ * para llamarla al cerrar la API.
+ */
+function markApiRunning(dbPath) {
+  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+  fs.writeFileSync(pidFile(dbPath), String(process.pid));
+  return () => fs.rmSync(pidFile(dbPath), { force: true });
+}
+
+/** PID de la API que usa la base, o null si no hay ninguna (o la que dejó el archivo ya terminó). */
+function runningApiPid(dbPath) {
+  let pid;
+  try {
+    pid = Number(fs.readFileSync(pidFile(dbPath), 'utf8'));
+  } catch {
+    return null;
+  }
+  if (!Number.isInteger(pid) || pid <= 0) {
+    return null;
+  }
+  try {
+    // La señal 0 no hace nada: solo comprueba que el proceso existe. EPERM significa que existe.
+    process.kill(pid, 0);
+    return pid;
+  } catch (error) {
+    return error.code === 'EPERM' ? pid : null;
+  }
+}
+
 /**
  * Reemplaza la base por un respaldo. La API debe estar detenida. Antes guarda la base actual como
  * "antes-de-restaurar-…" para poder deshacer. Lanza un Error con el motivo si el respaldo no es válido.
@@ -106,6 +140,11 @@ function restoreBackup(
   const error = validateBackupFile(file);
   if (error) {
     throw new Error(error);
+  }
+  // Con la API en marcha, en Windows la copia falla y en Linux la API seguiría usando la base anterior.
+  const pid = runningApiPid(target);
+  if (pid) {
+    throw new Error(`La API está en marcha (proceso ${pid}): detenla antes de restaurar`);
   }
 
   let safetyCopy = null;
@@ -153,15 +192,19 @@ function startBackupSchedule(db, { dir, intervalHours = 24, keep = 10, log = con
   return schedule;
 }
 
-function readNumber(env, name, fallback, { min, max = Infinity, integer }) {
+function readNumber(env, name, fallback, { min, max = Infinity, integer, allowZero = false }) {
   const raw = env[name];
   if (raw === undefined || raw === '') {
     return fallback;
   }
   const value = Number(raw);
+  if (allowZero && value === 0) {
+    return 0;
+  }
   if (!Number.isFinite(value) || value < min || value > max || (integer && !Number.isInteger(value))) {
     const range = max === Infinity ? `mayor o igual que ${min}` : `entre ${min} y ${max}`;
-    throw new Error(`${name} debe ser un número ${integer ? 'entero ' : ''}${range}`);
+    const zero = allowZero ? '0 o ' : '';
+    throw new Error(`${name} debe ser ${zero}un número ${integer ? 'entero ' : ''}${range}`);
   }
   return value;
 }
@@ -171,9 +214,10 @@ function backupConfig(env = process.env) {
   return {
     dir: env.BACKUP_DIR ? path.resolve(env.BACKUP_DIR) : DEFAULT_BACKUP_DIR,
     intervalHours: readNumber(env, 'BACKUP_INTERVAL_HOURS', 24, {
-      min: 0,
+      min: MIN_INTERVAL_HOURS,
       max: MAX_INTERVAL_HOURS,
       integer: false,
+      allowZero: true,
     }),
     keep: readNumber(env, 'BACKUP_KEEP', 10, { min: 1, integer: true }),
   };
@@ -185,6 +229,7 @@ module.exports = {
   backupFileName,
   createBackup,
   listBackups,
+  markApiRunning,
   pruneBackups,
   restoreBackup,
   startBackupSchedule,

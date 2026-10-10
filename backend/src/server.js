@@ -1,6 +1,6 @@
 const crypto = require('node:crypto');
 const { createApp } = require('./app');
-const { backupConfig, startBackupSchedule } = require('./backup');
+const { backupConfig, markApiRunning, startBackupSchedule } = require('./backup');
 const { createDb, DEFAULT_DB_PATH } = require('./db');
 
 const PORT = process.env.PORT || 3000;
@@ -20,7 +20,15 @@ function resolveJwtSecret() {
 
 const jwtSecret = resolveJwtSecret();
 const backups = backupConfig();
-const db = createDb(process.env.DB_PATH || DEFAULT_DB_PATH);
+const dbPath = process.env.DB_PATH || DEFAULT_DB_PATH;
+const db = createDb(dbPath);
+
+// "npm run restore" se niega a reemplazar la base mientras exista este archivo con un proceso vivo.
+const release = markApiRunning(dbPath);
+process.on('exit', release);
+for (const signal of ['SIGINT', 'SIGTERM']) {
+  process.on(signal, () => process.exit(0));
+}
 
 // Respaldo al arrancar y cada BACKUP_INTERVAL_HOURS horas (specs/003-respaldos-validaciones, H15).
 startBackupSchedule(db, backups);

@@ -39,3 +39,6 @@ Proyecto Parcial I - PA.pdf
 *.sublime-workspace
 .DS_Store
 Thumbs.db
+
+# Marca de la API en marcha junto a la base (npm run restore la consulta)
+*.db.pid
