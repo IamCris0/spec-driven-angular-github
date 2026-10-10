@@ -99,7 +99,7 @@ npm test                    # Jest + Supertest con SQLite en memoria (154 prueba
 
 cd frontend
 npx ng build                # compilación de producción
-npx ng test --no-watch      # Vitest + jsdom, sin navegador (135 pruebas)
+npx ng test --no-watch      # Vitest + jsdom, sin navegador (138 pruebas)
 ```
 
 Son los mismos pasos que ejecuta el pipeline. Si una prueba falla en local, también fallará en el Pull Request.
