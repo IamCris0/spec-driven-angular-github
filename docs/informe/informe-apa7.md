@@ -1,10 +1,10 @@
 # Un modelo moderno de desarrollo de software basado en especificaciones, GitHub e inteligencia artificial: propuesta para una empresa ecuatoriana
 
-> **Borrador para revisar en equipo.** Los datos entre corchetes los completan los integrantes. La versión en Word
+> **Borrador para revisar.** Los datos entre corchetes los completa el autor. La versión en Word
 > con formato APA 7 (Times New Roman 12, doble espacio, sangría francesa en las referencias y número de página) se
 > genera a partir de este archivo. Ver [`LEEME.md`](LEEME.md).
 
-**[Nombre y apellido del integrante 1]** y **[Nombre y apellido del integrante 2]**
+**[Nombre y apellido]**
 
 [Facultad], [Universidad]
 
@@ -25,9 +25,10 @@ artificial (IA) aplicada a la programación, calidad de software y gestión de p
 real: TaskFlow, un gestor de tareas con Angular, una API REST en Node.js y una base de datos SQLite, construido en
 tres versiones con GitHub Spec Kit, Pull Requests y un pipeline de GitHub Actions. El análisis crítico muestra que la
 combinación de especificaciones, pruebas automatizadas e integración continua permitió entregar 19 historias de
-usuario con 405 pruebas automáticas y ninguna ejecución fallida del pipeline, pero también que las prácticas
-humanas —la revisión de código y la protección de ramas— no se cumplieron, y que la IA generó la mayor parte del
-código. Con esas lecciones se propone un modelo de adopción en cuatro fases, con políticas, roles y métricas, para
+usuario con 415 pruebas automáticas y ninguna ejecución fallida del pipeline, pero también que las prácticas
+humanas —la revisión de código y la protección de ramas— no se cumplieron durante la mayor parte del proyecto, y que
+la IA generó la mayor parte del código. El proyecto se realizó de forma individual, y la revisión se resolvió con
+IA: dos revisiones (Claude Code y GitHub Copilot) encontraron ocho errores reales y tres falsos positivos. Con esas lecciones se propone un modelo de adopción en cuatro fases, con políticas, roles y métricas, para
 una empresa real como la Universidad Técnica de Machala (UTMACH) o una startup.
 
 *Palabras clave*: Spec Driven Development, GitHub Actions, integración continua, desarrollo guiado por pruebas,
@@ -50,6 +51,9 @@ enfoque de Aprendizaje Basado en Problemas, primero se investigan los siete bloq
 aplican en TaskFlow, un gestor de tareas tipo Kanban desarrollado con Angular, Express y SQLite en el repositorio
 público [`IamCris0/spec-driven-angular-github`](https://github.com/IamCris0/spec-driven-angular-github); después se
 analiza con honestidad qué funcionó y qué no; y por último se propone un plan de adopción para la empresa.
+
+El enunciado plantea el proyecto para dos estudiantes; este trabajo se realizó de forma individual. Esa condición
+afecta sobre todo a la revisión de código, y el informe explica cómo se resolvió y qué haría distinto una empresa.
 
 El informe se organiza así: el desarrollo de temas presenta cada bloque con su fundamento, su aplicación en TaskFlow
 y una valoración; el análisis crítico contrasta lo planificado con lo que muestra el historial del repositorio; la
@@ -107,7 +111,7 @@ razonable; la propuesta plantea migrar a ramas más cortas cuando la cobertura d
 
 #### Aplicación en TaskFlow
 
-El repositorio tiene 81 commits en `main` desde el 29 de septiembre de 2026, 15 ramas de trabajo y mensajes con
+Hasta la v2 (PR #20), el repositorio tenía 81 commits en `main` desde el 29 de septiembre de 2026, 15 ramas de trabajo y mensajes con
 Conventional Commits: 17 `feat`, 17 `test`, 13 `docs`, 5 `build`, 4 `chore`, 2 `ci` y 2 `fix`. Que haya tantos
 commits `test` como `feat` no es casualidad: es la huella del ciclo de pruebas primero (Bloque 6).
 
@@ -126,17 +130,27 @@ s. f.-b).
 La revisión de código es la lectura del cambio por alguien distinto de su autor antes de integrarlo. Bacchelli y Bird
 (2013) estudiaron revisiones en Microsoft y encontraron que, aunque los desarrolladores esperan sobre todo encontrar
 defectos, los resultados más frecuentes son la **transferencia de conocimiento**, el conocimiento compartido del
-código y la mejora de su legibilidad. En un equipo de dos personas esto es crítico: si solo una entiende el código,
-la empresa vuelve a depender de una persona. Una buena revisión comprueba que el cambio cumple la especificación,
+código y la mejora de su legibilidad. En un equipo pequeño esto es crítico: si solo una persona entiende el código,
+la empresa depende de ella. Una buena revisión comprueba que el cambio cumple la especificación,
 que tiene pruebas, que es legible y que no expone secretos; TaskFlow formaliza esa lista en
 `docs/flujo-de-trabajo.md` y en la plantilla de PR.
 
 #### Aplicación en TaskFlow
 
-Se fusionaron 20 PR y hay dos más abiertos (#39 y #40), todos con el pipeline en verde. Sin embargo, **ninguno de los
-20 PR fusionados tuvo una revisión aprobada** y 13 no tenían descripción. Este es el principal hallazgo del análisis
-crítico. Los PR abiertos ya siguen la plantilla (issue enlazada, cómo probar, uso de IA y lista de revisión) y quedan
-a la espera de la revisión del compañero.
+Los PR #1 a #20 se fusionaron con el pipeline en verde, pero **ninguno tuvo revisión** y 13 no tenían descripción:
+es el principal hallazgo del análisis crítico. Desde el PR #39 cada PR sigue la plantilla (issue enlazada, cómo
+probar, uso de IA y lista de revisión) y lleva una revisión escrita.
+
+#### Revisión de código en un equipo de una persona
+
+GitHub no permite aprobar un PR propio, así que un desarrollador solo no puede cumplir la regla clásica de "una
+aprobación". La constitución se enmendó (versión 1.1.0) para sustituirla por una revisión documentada: el autor
+recorre la lista de revisión sobre el diff, pide una revisión a una IA, evalúa cada observación y corrige las
+válidas con una prueba primero. En el PR #39 (respaldos y validaciones) esta revisión encontró seis errores reales;
+el más grave era que un intervalo de respaldo de más de 596 horas desbordaba el temporizador de Node.js y la API
+respaldaba cada milisegundo. Todos se corrigieron con pruebas antes de fusionar. La revisión con IA no reemplaza la
+transferencia de conocimiento entre personas que describen Bacchelli y Bird (2013), pero sí su función de detectar
+defectos.
 
 ### Bloque 3: Desarrollo basado en especificaciones
 
@@ -241,11 +255,29 @@ dependencias.
 #### Aplicación en TaskFlow y declaración de uso
 
 La mayor parte del código, las pruebas y la documentación se generó con **Claude Code**, un agente de programación,
-a partir de las especificaciones: 60 de los 81 commits de `main` tienen a Claude como autor y los demás son, sobre
-todo, fusiones de PR. El equipo redactó y aprobó las especificaciones, eligió el alcance de cada versión, ejecutó y
-revisó las pruebas y probó la aplicación. [Completar: uso de GitHub Copilot —revisión de Copilot en un PR, capturas
-de Copilot Chat en VS Code— y qué partes revisó cada integrante.] Esta concentración de autoría es un riesgo que se
-discute en el análisis crítico.
+a partir de las especificaciones: hasta la v2, 60 de los 81 commits de `main` tenían a Claude como autor y los demás
+eran, sobre todo, fusiones de PR. El autor definió el alcance de cada versión, aprobó las especificaciones, ejecutó
+las pruebas y probó la aplicación. Esta concentración de autoría es un riesgo que se discute en el análisis crítico.
+
+**GitHub Copilot.** La cuenta tiene el plan gratuito (Copilot Free), que incluye Copilot Chat en GitHub.com pero no
+la revisión automática de PR, reservada a los planes de pago. Se usó Copilot Chat como segundo revisor de
+`backend/src/backup.js` con un prompt construido según los patrones anteriores: rol ("actúa como revisor de código
+senior"), contexto (Express, better-sqlite3, respaldos y restauración), tarea acotada (errores de correctitud en
+casos borde, archivos auxiliares de SQLite, Windows y temporizadores) y formato de salida (lista de cinco puntos con
+problema, función y corrección). El primer intento falló porque la URL llegó con errores de tipeo: Copilot lo
+detectó y pidió la ruta correcta, una muestra de que el contexto exacto importa tanto como la instrucción.
+
+De sus cinco observaciones, **dos eran válidas** y se corrigieron con pruebas: restaurar la base con la API en
+marcha (ahora la API deja un archivo con su número de proceso y la restauración se niega mientras siga viva) y un
+intervalo diminuto que también respaldaría casi cada milisegundo. **Tres eran falsos positivos**: señaló promesas sin
+manejo de errores que sí lo tenían, propuso copiar el archivo `-wal` junto al respaldo —lo que lo dañaría, porque la
+API de respaldo en línea de SQLite ya produce una copia consistente— y advirtió un cierre de conexión que no puede
+fallar. Este resultado ilustra el Principio VI de la constitución: la IA asiste, pero cada sugerencia se verifica
+antes de aplicarla (Figuras 1 y 2).
+
+![Prompt de revisión enviado a GitHub Copilot Chat y comienzo de su respuesta sobre backup.js](evidencias/copilot-1.jpg)
+
+![Observaciones 3 y 4 de Copilot sobre la restauración con la API en marcha (válida) y el cierre de la conexión (falso positivo)](evidencias/copilot-2.jpg)
 
 ### Bloque 6: Calidad de software
 
@@ -265,8 +297,8 @@ completa del sistema y, con protección de ramas, impide fusionar un cambio que 
 
 | Medida | v1 | v2 | v3 |
 |---|---|---|---|
-| Pruebas de la API (Jest + Supertest, SQLite en memoria) | 72 | 154 | 234 |
-| Pruebas del frontend (Vitest + jsdom) | 49 | 138 | 171 |
+| Pruebas de la API (Jest + Supertest, SQLite en memoria) | 72 | 154 | 242 |
+| Pruebas del frontend (Vitest + jsdom) | 49 | 138 | 173 |
 | Cobertura de líneas de la API | — | 99 % | 99 % |
 
 En la v3 cada commit `feat:` está precedido por un commit `test:` con las pruebas que fallaban (por ejemplo,
@@ -291,8 +323,9 @@ con fecha y muestran el porcentaje de avance (GitHub, s. f.-f).
 El repositorio tiene tres milestones (`v0.1 – Especificaciones` y `v0.2 – MVP`, cerrados, y `v1.0 – Entrega final`),
 etiquetas `feature`, `bug`, `docs`, `ci` y `gestion`, y 18 issues: una por cada fase y el mantenimiento (#21 a #31),
 la v3 (#32), las plantillas (#33), el informe (#34), la presentación (#35), la protección de ramas (#36), la
-incorporación del compañero (#37) y la medición del criterio CE-001 (#38). [Completar: enlace y captura del tablero
-de GitHub Projects con las columnas Por hacer, En progreso, En revisión y Hecho.] Las issues de las fases 1 a 9 se
+incorporación de un segundo integrante (#37, cerrada como no aplicable) y la medición del criterio CE-001 (#38).
+[Completar: enlace y captura del tablero de GitHub Projects con las columnas Por hacer, En progreso, En revisión y
+Hecho.] Las issues de las fases 1 a 9 se
 registraron después de hacer el trabajo; desde la v3, la issue se creó antes que el código.
 
 ---
@@ -304,31 +337,33 @@ registraron después de hacer el trabajo; desde la v3, la issue se creó antes q
 1. **La especificación redujo la ambigüedad.** Cada historia tiene escenarios "Dado–Cuando–Entonces" que se
    tradujeron casi uno a uno en pruebas automáticas. Cuando la IA generó código, el criterio para aceptarlo no fue
    "parece correcto", sino "cumple los escenarios y pasa las pruebas".
-2. **El pipeline detuvo los errores antes de `main`.** Las 48 ejecuciones exitosas no significan que nunca hubo
+2. **El pipeline detuvo los errores antes de `main`.** Más de 50 ejecuciones exitosas no significan que nunca hubo
    errores, sino que se corrigieron en las ramas antes de fusionar.
+5. **La revisión con IA encontró errores que las pruebas no cubrían.** En el PR #39, seis hallazgos de Claude Code y
+   dos de Copilot, todos con una prueba que los reproduce antes de corregirlos.
 3. **La documentación se mantuvo viva.** README, especificaciones y `docs/verificacion.md` se actualizaron en el mismo
    PR que el código, y la verificación registra también lo que no se cumple.
 4. **Simplicidad deliberada.** Cuatro dependencias nuevas en la v2, todas justificadas, y ninguna en la v3.
 
 ### Lo que no funcionó
 
-1. **No hubo revisión de código.** Ningún PR fusionado tuvo aprobación y el compañero no aparece como autor ni como
-   revisor. El Principio III de la constitución y el criterio CE-004 ("nada llega a `main` sin PR aprobado y pipeline
-   en verde") **no se cumplen**. Además, `main` recibió dos *push* directos (`29b9ddd` y `64f2b7d`) y varios PR
-   apuntaron a `main` en lugar de a `develop`.
-2. **Las ramas no están protegidas.** La causa es organizativa más que técnica: con un solo integrante con permisos
-   en el repositorio, exigir una aprobación habría bloqueado todas las fusiones, y el equipo priorizó avanzar. En una
-   empresa esa decisión sería inaceptable: la protección de ramas es justamente lo que impide que la urgencia salte
-   los controles. La propuesta la configura desde el primer día y agrega al compañero como colaborador antes (issues
-   #36 y #37).
-3. **La IA escribió casi todo el código.** Esto aceleró el proyecto, pero concentra el riesgo: si el equipo no
+1. **Durante 20 PR no hubo revisión de código.** Los PR #1 a #20 se fusionaron sin revisión y el criterio CE-004
+   ("nada llega a `main` sin PR aprobado y pipeline en verde") no se cumplía. Además, `main` recibió dos *push*
+   directos (`29b9ddd` y `64f2b7d`) y varios PR apuntaron a `main` en lugar de a `develop`.
+2. **Las ramas se protegieron tarde.** Con una sola persona, GitHub no permite aprobar el propio PR, y exigir una
+   aprobación habría bloqueado todas las fusiones; se priorizó avanzar. La protección (PR y checks obligatorios, sin
+   excepciones para administradores) se configuró recién al final, junto con la revisión escrita asistida por IA. En
+   una empresa esa decisión sería inaceptable: la protección de ramas es justamente lo que impide que la urgencia
+   salte los controles, y debe configurarse el primer día.
+3. **La IA escribió casi todo el código.** Esto aceleró el proyecto, pero concentra el riesgo: si el desarrollador no
    entiende el código, no puede mantenerlo, que es exactamente el problema de dependencia que la empresa quiere
    evitar. Lo mitigan las especificaciones, las pruebas y la verificación manual, pero no sustituyen a la revisión
    humana, y DORA (2024) muestra que la IA sin controles empeora la estabilidad.
 4. **Gestión del proyecto a posteriori.** Las issues de las primeras fases se crearon al final para dejar trazabilidad.
    Sirven como registro, pero no cumplieron su función de organizar el trabajo mientras ocurría.
-5. **Copilot apenas se usó.** El bloque 5 pedía GitHub Copilot y el equipo usó otro agente. Las prácticas son
-   transferibles, pero la evidencia del uso de Copilot queda pendiente.
+5. **Copilot se usó poco.** El plan gratuito no incluye la revisión automática de PR ni el agente en la nube; se usó
+   Copilot Chat como segundo revisor y el desarrollo principal se hizo con otro agente. Las prácticas (especificar,
+   acotar el prompt, verificar) son las mismas.
 6. **Limitaciones técnicas aceptadas.** El *deploy* es simulado; SQLite no está pensado para muchos usuarios
    concurrentes; el límite de intentos de inicio de sesión vive en memoria; los respaldos se guardan en el mismo disco
    que la base; y el criterio CE-001 (crear una tarea en menos de 30 segundos) no se cronometró con usuarios.
@@ -337,7 +372,8 @@ registraron después de hacer el trabajo; desde la v3, la issue se creó antes q
 
 La lección principal es que **las herramientas automatizan lo técnico, pero no lo humano**. El pipeline, las pruebas
 y las especificaciones se cumplieron porque la máquina los ejecuta; la revisión de código y la protección de ramas
-fallaron porque dependían de la disciplina del equipo. Un modelo para la empresa debe convertir esas prácticas
+fallaron mientras dependieron solo de la disciplina. Cuando se convirtieron en reglas (protección de ramas) y en un
+paso del flujo (revisión escrita con IA), se cumplieron. Un modelo para la empresa debe convertir esas prácticas
 humanas en reglas que el sistema haga cumplir.
 
 ---
@@ -420,13 +456,15 @@ personas, la revisión de Copilot puede ser el primer filtro, pero no sustituye 
 1. Los cinco problemas de la empresa tienen solución con herramientas disponibles y, en buena parte, gratuitas, pero
    la solución es un **modelo integrado**: control de versiones, especificaciones, pruebas, automatización y gestión
    se necesitan entre sí.
-2. TaskFlow demuestra que el modelo funciona en la práctica: tres versiones con 19 historias de usuario, 405 pruebas
-   automatizadas, cobertura del 99 % en la API, 48 ejecuciones del pipeline sin fallos y documentación actualizada en
-   cada cambio.
+2. TaskFlow demuestra que el modelo funciona en la práctica: tres versiones con 19 historias de usuario, 415 pruebas
+   automatizadas, cobertura del 99 % en la API, más de 50 ejecuciones del pipeline sin fallos y documentación
+   actualizada en cada cambio.
 3. SDD es especialmente valioso cuando se programa con IA, porque convierte el contexto del proyecto en un artefacto
    versionado que guía al agente y permite verificar lo que produce.
 4. Las prácticas que dependen solo de la disciplina —revisión de código, protección de ramas, gestión al día— fueron
-   las que fallaron. En una empresa deben configurarse como reglas que el sistema obligue a cumplir.
+   las que fallaron. En una empresa deben configurarse como reglas que el sistema obligue a cumplir. Para quien
+   trabaja solo, la revisión asistida por IA es un sustituto útil, siempre que cada observación se verifique: de
+   las cinco de Copilot, tres eran falsas.
 5. La IA multiplica la velocidad, pero también los riesgos si no hay especificaciones, pruebas y revisión humana. La
    propuesta la incorpora al final de la hoja de ruta y con una política explícita.
 
@@ -447,7 +485,7 @@ confirma, y no protege los datos de la aplicación: por eso la v3 agregó respal
 Porque el software ya no se entrega una vez al año: se actualiza continuamente, y cada entrega manual es una
 oportunidad de error. DevOps automatiza lo repetitivo —compilar, probar, desplegar— para que los errores aparezcan en
 minutos y no en producción, y mide el proceso para mejorarlo (Forsgren et al., 2018). En el proyecto, el pipeline
-ejecutó cientos de pruebas en cada PR sin que nadie tuviera que recordarlo. También aprendimos que DevOps es sobre
+ejecutó cientos de pruebas en cada PR sin que nadie tuviera que recordarlo. También aprendí que DevOps es sobre
 todo cultura: la automatización se cumplió y la revisión entre personas, no.
 
 ### ¿Cómo la IA está cambiando la programación?
@@ -461,7 +499,7 @@ audita que a alguien que teclea.
 
 ### ¿Qué herramienta fue más útil y por qué?
 
-[Respuesta del equipo. Sugerencia para discutir: **GitHub Actions**, porque convirtió las pruebas en una garantía y no
+[Respuesta del autor. Sugerencia: **GitHub Actions**, porque convirtió las pruebas en una garantía y no
 en una buena intención —ningún cambio llegó a `main` con pruebas fallando— y porque su valor se nota sin cambiar los
 hábitos de nadie. También se puede defender **Spec Kit**, porque las especificaciones fueron lo que hizo útil a la IA.]
 
@@ -542,13 +580,28 @@ https://doi.org/10.48550/arXiv.2302.11382
 | Flujo de trabajo | `docs/flujo-de-trabajo.md` |
 | Verificación de requisitos y criterios de éxito | `docs/verificacion.md` |
 | Pipeline | `.github/workflows/ci.yml` y la pestaña **Actions** |
-| Pull Requests | Pestaña **Pull requests** (#1 a #20 fusionados; #39 y #40 abiertos) |
+| Pull Requests | Pestaña **Pull requests** (#1 a #20 sin revisión; #39 a #41 con revisión escrita) |
+| Revisión con IA | Comentarios de revisión en los PR #39 y #40 (Claude Code y GitHub Copilot Chat) |
+| Protección de ramas | `main` y `develop`: PR y checks `backend` y `frontend` obligatorios (issue #36) |
 | Issues y milestones | Pestañas **Issues** y **Milestones** |
 | Artefacto del deploy | Actions → ejecución en `main` → Artifacts → `taskflow-frontend` |
 
 ## Anexo B: Declaración de uso de inteligencia artificial
 
-En este proyecto se usó Claude Code (Anthropic) para generar código, pruebas, documentación y el primer borrador de
-este informe, a partir de especificaciones escritas y aprobadas por el equipo. [Completar: uso de GitHub Copilot.]
-Los integrantes revisaron [completar: qué revisó cada uno], ejecutaron las pruebas y probaron la aplicación. La
-responsabilidad por el contenido entregado es de los integrantes del equipo.
+En este proyecto se usó Claude Code (Anthropic) para generar código, pruebas, documentación, la revisión de código
+de los PR #39 y #40 y el primer borrador de este informe, a partir de especificaciones aprobadas por el autor. Se usó
+GitHub Copilot Chat (plan Free) como segundo revisor de `backend/src/backup.js`; sus observaciones se evaluaron una a
+una (Figuras 1 y 2). El autor ejecutó las pruebas, probó la aplicación y revisó [completar: qué partes revisó
+personalmente]. La responsabilidad por el contenido entregado es del autor.
+
+## Anexo C: Capturas de evidencia
+
+![Pull Request #39 con la issue enlazada, el milestone y la descripción según la plantilla](evidencias/github-pr39.png)
+
+![Ejecuciones de GitHub Actions: todas en verde](evidencias/github-actions.png)
+
+![Issues del proyecto, una por fase, con etiquetas y milestone](evidencias/github-issues.png)
+
+![Milestone v1.0 – Entrega final con su avance](evidencias/github-milestones.png)
+
+![Historial de la rama de la v3: cada commit test precede a su commit feat o fix](evidencias/github-commits.png)
