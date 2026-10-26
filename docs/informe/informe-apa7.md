@@ -23,9 +23,10 @@ en producción, no documenta y no automatiza. Este informe investiga siete área
 —control de versiones, trabajo colaborativo, desarrollo guiado por especificaciones (SDD), DevOps, inteligencia
 artificial (IA) aplicada a la programación, calidad de software y gestión de proyectos— y las aplica en un sistema
 real: TaskFlow, un gestor de tareas con Angular, una API REST en Node.js y una base de datos SQLite, construido en
-tres versiones con GitHub Spec Kit, Pull Requests y un pipeline de GitHub Actions. El análisis crítico muestra que la
-combinación de especificaciones, pruebas automatizadas e integración continua permitió entregar 19 historias de
-usuario con 415 pruebas automáticas y ninguna ejecución fallida del pipeline, pero también que las prácticas
+cuatro versiones con GitHub Spec Kit, Pull Requests y un pipeline de GitHub Actions. El análisis crítico muestra que la
+combinación de especificaciones, pruebas automatizadas e integración continua permitió entregar 24 historias de
+usuario con 431 pruebas automáticas —incluidas pruebas de punta a punta en un navegador real— y una aplicación que
+se ejecuta con un solo comando en contenedores, pero también que las prácticas
 humanas —la revisión de código y la protección de ramas— no se cumplieron durante la mayor parte del proyecto, y que
 la IA generó la mayor parte del código. El proyecto se realizó de forma individual, y la revisión se resolvió con
 IA: dos revisiones (Claude Code y GitHub Copilot) encontraron ocho errores reales y tres falsos positivos. Con esas lecciones se propone un modelo de adopción en cuatro fases, con políticas, roles y métricas, para
@@ -184,7 +185,8 @@ s. f.-d). Funciona con varios agentes, entre ellos GitHub Copilot y Claude Code.
 | Especificación v1 | `specs/001-gestor-tareas/spec.md` | 5 historias (tablero, crear, mover, editar, filtrar), RF-001 a RF-007, CE-001 a CE-004 |
 | Especificación v2 | `specs/002-taskflow-v2/spec.md` | 9 historias (cuentas, autoría, fechas límite, arrastre, búsqueda, comentarios, estadísticas, diseño), RF-008 a RF-017 |
 | Especificación v3 | `specs/003-respaldos-validaciones/spec.md` | 5 historias (respaldos automáticos, restauración, exportar, importar, validaciones), RF-018 a RF-024 |
-| Planes y tareas | `plan.md` y `tasks.md` de cada versión | 52 tareas (T001 a T052), cada fase en su rama y su PR |
+| Especificación v4 | `specs/004-calidad-despliegue/spec.md` | 5 historias (Docker, pruebas de punta a punta, puertas de calidad, versiones automáticas, configuración por entorno), RF-025 a RF-032 |
+| Planes y tareas | `plan.md` y `tasks.md` de cada versión | 64 tareas (T001 a T064), cada fase en su rama y su PR |
 
 Cada plan incluye una tabla que lo verifica contra la constitución y justifica cada dependencia nueva (Principio V:
 simplicidad). La v3 no agregó ninguna dependencia porque la librería de SQLite ya incluía la función de respaldo en
@@ -208,18 +210,26 @@ un PR (GitHub, s. f.-a).
 
 #### Automatización de build, test y deploy en TaskFlow
 
-El archivo `.github/workflows/ci.yml` define tres trabajos:
+El pipeline creció con cada versión. En la v4, `.github/workflows/ci.yml` define cinco trabajos y otros dos
+*workflows* completan el ciclo:
 
-| Job | Pasos | Cuándo |
+| Job o workflow | Pasos | Cuándo |
 |---|---|---|
-| `backend` | `npm ci` → `npm test` (Jest + Supertest) | En cada `push` y PR hacia `main` o `develop` |
+| `backend` | `npm ci` → pruebas con Jest y Supertest, con cobertura mínima del 95 % de las líneas | En cada `push` y PR hacia `main` o `develop` |
 | `frontend` | `npm ci` → `ng build` → `ng test` (Vitest) | Igual |
-| `deploy` | Compila el frontend y lo publica como artefacto descargable `taskflow-frontend` | Solo en `push` a `main` y con los dos anteriores en verde |
+| `e2e` | Levanta la API y el frontend y un navegador Chromium recorre la aplicación (Playwright) | Igual |
+| `docker` | Construye las imágenes, las levanta con Docker Compose y comprueba la API a través de nginx | Igual |
+| `deploy` | Publica el build del frontend como artefacto descargable | Solo en `push` a `main` |
+| `codeql.yml` | Análisis de seguridad del código | Push, PR y cada lunes |
+| `release.yml` | Publica la versión en *Releases* con el build | Al crear una etiqueta `v*` |
 
-El historial de GitHub Actions registra 48 ejecuciones exitosas y ninguna fallida. El *deploy* es simulado: publica el
-build como artefacto en lugar de subirlo a un servidor, porque el despliegue real quedó fuera del alcance del
-proyecto. Además, la v3 agrega **Dependabot**, que revisa cada semana las dependencias y abre PR con las
-actualizaciones, y en la reverificación del 10 de octubre `npm audit` reportó cero vulnerabilidades.
+Ninguna ejecución del pipeline sobre `main` falló. La aplicación queda empaquetada en contenedores (una imagen para la
+API y otra con nginx para el frontend) y se ejecuta con `docker compose up`; lo que no se hizo es publicarla en un
+servidor de la nube, porque exige crear una cuenta en un proveedor. Además, **Dependabot** revisa cada semana las
+dependencias, y **CodeQL** encontró en su primera ejecución una alerta de severidad alta (la API no limitaba las
+peticiones por IP), que se corrigió con pruebas en el mismo PR. Entre el 10 y el 26 de octubre aparecieron
+*advisories* nuevas en `body-parser` y en `@angular/router`; se corrigieron y `npm audit` volvió a cero. Este es el
+sentido de automatizar la seguridad: las vulnerabilidades aparecen aunque el código no cambie.
 
 ### Bloque 5: Inteligencia artificial aplicada al desarrollo
 
@@ -295,11 +305,16 @@ completa del sistema y, con protección de ramas, impide fusionar un cambio que 
 
 #### Aplicación en TaskFlow
 
-| Medida | v1 | v2 | v3 |
-|---|---|---|---|
-| Pruebas de la API (Jest + Supertest, SQLite en memoria) | 72 | 154 | 242 |
-| Pruebas del frontend (Vitest + jsdom) | 49 | 138 | 173 |
-| Cobertura de líneas de la API | — | 99 % | 99 % |
+| Medida | v1 | v2 | v3 | v4 |
+|---|---|---|---|---|
+| Pruebas de la API (Jest + Supertest, SQLite en memoria) | 72 | 154 | 242 | 251 |
+| Pruebas del frontend (Vitest + jsdom) | 49 | 138 | 173 | 174 |
+| Pruebas de punta a punta (Playwright) | — | — | — | 6 |
+| Cobertura de líneas de la API | — | 99 % | 99 % | 99 % (mínimo exigido: 95 %) |
+
+Las pruebas forman una pirámide: muchas pruebas unitarias y de API, rápidas y baratas, y pocas de punta a punta, que
+recorren la aplicación completa en un navegador y detectan lo que las otras no ven, como una ruta mal registrada o un
+*proxy* mal configurado.
 
 En la v3 cada commit `feat:` está precedido por un commit `test:` con las pruebas que fallaban (por ejemplo,
 `d1c0a4c` agrega las pruebas de validación y `faec568` las implementa). Las pruebas encontraron problemas reales: la
@@ -340,7 +355,8 @@ registraron después de hacer el trabajo; desde la v3, la issue se creó antes q
 2. **El pipeline detuvo los errores antes de `main`.** Más de 50 ejecuciones exitosas no significan que nunca hubo
    errores, sino que se corrigieron en las ramas antes de fusionar.
 5. **La revisión con IA encontró errores que las pruebas no cubrían.** En el PR #39, seis hallazgos de Claude Code y
-   dos de Copilot, todos con una prueba que los reproduce antes de corregirlos.
+   dos de Copilot, todos con una prueba que los reproduce antes de corregirlos. En el PR #43, CodeQL encontró dos
+   más.
 3. **La documentación se mantuvo viva.** README, especificaciones y `docs/verificacion.md` se actualizaron en el mismo
    PR que el código, y la verificación registra también lo que no se cumple.
 4. **Simplicidad deliberada.** Cuatro dependencias nuevas en la v2, todas justificadas, y ninguna en la v3.
@@ -364,7 +380,8 @@ registraron después de hacer el trabajo; desde la v3, la issue se creó antes q
 5. **Copilot se usó poco.** El plan gratuito no incluye la revisión automática de PR ni el agente en la nube; se usó
    Copilot Chat como segundo revisor y el desarrollo principal se hizo con otro agente. Las prácticas (especificar,
    acotar el prompt, verificar) son las mismas.
-6. **Limitaciones técnicas aceptadas.** El *deploy* es simulado; SQLite no está pensado para muchos usuarios
+6. **Limitaciones técnicas aceptadas.** La aplicación no está publicada en un servidor de la nube (sí en contenedores
+   y con versiones automáticas); SQLite no está pensado para muchos usuarios
    concurrentes; el límite de intentos de inicio de sesión vive en memoria; los respaldos se guardan en el mismo disco
    que la base; y el criterio CE-001 (crear una tarea en menos de 30 segundos) no se cronometró con usuarios.
 
@@ -456,9 +473,9 @@ personas, la revisión de Copilot puede ser el primer filtro, pero no sustituye 
 1. Los cinco problemas de la empresa tienen solución con herramientas disponibles y, en buena parte, gratuitas, pero
    la solución es un **modelo integrado**: control de versiones, especificaciones, pruebas, automatización y gestión
    se necesitan entre sí.
-2. TaskFlow demuestra que el modelo funciona en la práctica: tres versiones con 19 historias de usuario, 415 pruebas
-   automatizadas, cobertura del 99 % en la API, más de 50 ejecuciones del pipeline sin fallos y documentación
-   actualizada en cada cambio.
+2. TaskFlow demuestra que el modelo funciona en la práctica: cuatro versiones con 24 historias de usuario, 431 pruebas
+   automatizadas (6 de ellas de punta a punta), cobertura del 99 % en la API, análisis de seguridad, contenedores y
+   documentación actualizada en cada cambio.
 3. SDD es especialmente valioso cuando se programa con IA, porque convierte el contexto del proyecto en un artefacto
    versionado que guía al agente y permite verificar lo que produce.
 4. Las prácticas que dependen solo de la disciplina —revisión de código, protección de ramas, gestión al día— fueron
@@ -476,7 +493,7 @@ personas, la revisión de Copilot puede ser el primer filtro, pero no sustituye 
 
 Git resuelve la pérdida y el desorden de las versiones: cada cambio queda registrado con su autor, su fecha y su
 motivo, y cualquier estado anterior se puede recuperar. En un equipo, además, permite trabajar en paralelo con ramas
-e integrar sin pisarse. En TaskFlow eso permitió desarrollar tres versiones sin perder nada, saber qué commit
+e integrar sin pisarse. En TaskFlow eso permitió desarrollar cuatro versiones sin perder nada, saber qué commit
 introdujo cada cambio y corregir un error con una rama `fix/*` sin detener el resto. Pero Git solo guarda lo que se
 confirma, y no protege los datos de la aplicación: por eso la v3 agregó respaldos de la base.
 
@@ -584,6 +601,10 @@ https://doi.org/10.48550/arXiv.2302.11382
 | Revisión con IA | Comentarios de revisión en los PR #39 y #40 (Claude Code y GitHub Copilot Chat) |
 | Protección de ramas | `main` y `develop`: PR y checks `backend` y `frontend` obligatorios (issue #36) |
 | Issues y milestones | Pestañas **Issues** y **Milestones** |
+| Ejecución con un comando | `docker-compose.yml` y los Dockerfiles: `docker compose up --build` → http://localhost:8080 |
+| Pruebas de punta a punta | `e2e/tests/taskflow.spec.ts` y el job `e2e` |
+| Seguridad | Pestaña **Security** (CodeQL) y `npm audit` en 0 |
+| Guía para el docente y hoja de ruta | `docs/guia-docente.md` y `docs/hoja-de-ruta.md` |
 | Artefacto del deploy | Actions → ejecución en `main` → Artifacts → `taskflow-frontend` |
 
 ## Anexo B: Declaración de uso de inteligencia artificial
@@ -605,3 +626,5 @@ personalmente]. La responsabilidad por el contenido entregado es del autor.
 ![Milestone v1.0 – Entrega final con su avance](evidencias/github-milestones.png)
 
 ![Historial de la rama de la v3: cada commit test precede a su commit feat o fix](evidencias/github-commits.png)
+
+![Pipeline de la v4 en el PR #43 con los trabajos backend, frontend, e2e y docker en verde](evidencias/github-pipeline-v4.png)

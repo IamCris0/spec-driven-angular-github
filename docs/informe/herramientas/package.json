@@ -1,0 +1,12 @@
+{
+  "name": "taskflow-informe",
+  "private": true,
+  "description": "Genera el informe en Word con formato APA 7 a partir de informe-apa7.md",
+  "scripts": {
+    "generar": "node generar-docx.js"
+  },
+  "dependencies": {
+    "docx": "^9.5.1",
+    "marked": "^15.0.12"
+  }
+}
