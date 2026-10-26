@@ -84,6 +84,32 @@ jobs:
           path: e2e/playwright-report
           retention-days: 14
 
+  # Contenedores (specs/004-calidad-despliegue, H20, CE-012): construye las imágenes, las levanta con
+  # docker compose y comprueba, a través de nginx, que la API responde y que las rutas de Angular cargan.
+  docker:
+    runs-on: ubuntu-latest
+    env:
+      JWT_SECRET: clave-del-pipeline
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build
+      - name: Esperar a que la API responda a través de nginx
+        run: |
+          for i in $(seq 1 40); do
+            if curl -fsS http://localhost:8080/api/health; then exit 0; fi
+            sleep 3
+          done
+          docker compose logs
+          exit 1
+      - name: Probar el registro y una ruta de Angular
+        run: |
+          curl -fsS -X POST http://localhost:8080/api/auth/register \
+            -H 'Content-Type: application/json' \
+            -d '{"name":"Pipeline","email":"ci@taskflow.ec","password":"clave2026"}' | grep -q '"token"'
+          curl -fsS http://localhost:8080/respaldos | grep -q '<app-root'
+      - if: always()
+        run: docker compose down -v
+
   # Deploy simulado (T023): solo en push a main y con backend y frontend en verde,
   # publica el build del frontend como artefacto descargable del run.
   deploy:
