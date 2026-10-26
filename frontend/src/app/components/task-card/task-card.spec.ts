@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Task, TaskStatus } from '../../models/task';
 import { TaskCard } from './task-card';
+import { API_URL } from '../../api';
 
 const task: Task = {
   id: 7,
@@ -153,8 +154,6 @@ describe('TaskCard: fecha límite, autor y comentarios', () => {
     await fixture.whenStable();
 
     expect(root.querySelector('app-task-comments')).not.toBeNull();
-    TestBed.inject(HttpTestingController)
-      .expectOne('http://localhost:3000/api/tasks/7/comments')
-      .flush([]);
+    TestBed.inject(HttpTestingController).expectOne(`${API_URL}/tasks/7/comments`).flush([]);
   });
 });

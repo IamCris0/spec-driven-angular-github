@@ -1,0 +1,32 @@
+name: Funcionalidad
+description: Una historia de usuario nueva o una fase de tasks.md
+labels: [feature]
+body:
+  - type: textarea
+    id: historia
+    attributes:
+      label: Historia de usuario
+      description: Como … quiero … para …
+      placeholder: Como integrante del equipo, quiero …, para …
+    validations:
+      required: true
+  - type: textarea
+    id: aceptacion
+    attributes:
+      label: Escenarios de aceptación
+      description: Dado … cuando … entonces …
+    validations:
+      required: true
+  - type: input
+    id: spec
+    attributes:
+      label: Especificación
+      description: Ruta de la carpeta en specs/ (o "por escribir")
+      placeholder: specs/004-nombre/spec.md
+  - type: checkboxes
+    id: sdd
+    attributes:
+      label: Antes de programar
+      options:
+        - label: La especificación y el plan están aprobados en un Pull Request
+        - label: La issue tiene responsable y milestone

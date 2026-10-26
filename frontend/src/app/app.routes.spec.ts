@@ -1,6 +1,7 @@
 import { Board } from './components/board/board';
 import { authGuard, guestGuard } from './guards/auth.guard';
 import { routes } from './app.routes';
+import { Backup } from './pages/backup/backup';
 import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
 import { Stats } from './pages/stats/stats';
@@ -11,6 +12,7 @@ describe('rutas', () => {
   it.each([
     ['', Board],
     ['estadisticas', Stats],
+    ['respaldos', Backup],
   ])('"/%s" muestra su pantalla y exige sesión', (path, component) => {
     expect(route(path)?.component).toBe(component);
     expect(route(path)?.canActivate).toEqual([authGuard]);

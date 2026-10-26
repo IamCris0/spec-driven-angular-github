@@ -71,4 +71,7 @@ function createDb(filename = DEFAULT_DB_PATH) {
   return db;
 }
 
-module.exports = { createDb, DEFAULT_DB_PATH };
+/** Versión del esquema que deja createDb(); un respaldo más nuevo no se puede restaurar. */
+const SCHEMA_VERSION = MIGRATIONS.length;
+
+module.exports = { createDb, DEFAULT_DB_PATH, SCHEMA_VERSION };
