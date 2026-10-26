@@ -25,7 +25,17 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
-      - run: npm test
+      # Falla si la cobertura de líneas baja del 95 % (coverageThreshold en package.json, RF-028).
+      - run: npm run test:coverage
+      - name: Cobertura en el resumen del job
+        if: always()
+        run: |
+          node -e "
+            const total = require('./coverage/coverage-summary.json').total;
+            const rows = ['lines', 'statements', 'functions', 'branches']
+              .map((k) => '| ' + k + ' | ' + total[k].pct + ' % |');
+            console.log(['### Cobertura de la API', '', '| Métrica | Cobertura |', '|---|---|', ...rows].join('\n'));
+          " >> "$GITHUB_STEP_SUMMARY"
 
   frontend:
     runs-on: ubuntu-latest
