@@ -54,6 +54,8 @@ vulnerabilidades conocidas.
 2. **Dado** un push o PR hacia `main` o `develop`, **cuando** corre el pipeline, **entonces** CodeQL analiza el
    código JavaScript y TypeScript y publica las alertas en la pestaña *Security*.
 3. El resumen del job `backend` muestra la cobertura de la API.
+4. **Dado** un cliente que envía más de 300 peticiones por minuto a la API, **cuando** supera el límite, **entonces**
+   recibe `429 "Demasiadas peticiones, espera un momento"` (alerta de CodeQL `js/missing-rate-limiting`).
 
 ### Historia 23: Versión publicada al crear una etiqueta (Prioridad: P2)
 
@@ -93,6 +95,7 @@ aplicación en local, en Docker o en un servidor.
 - **RF-028**: El pipeline DEBE exigir una cobertura mínima de líneas del 95 % en la API.
 - **RF-029**: El repositorio DEBE analizar el código con CodeQL en cada push y PR hacia `main` y `develop`.
 - **RF-030**: Una etiqueta `v*` DEBE publicar una versión con el build del frontend.
+- **RF-032**: La API DEBE limitar las peticiones por IP (300 por minuto por defecto, configurable).
 - **RF-031**: El frontend NO DEBE tener escrita la dirección de la API; el origen permitido por la API DEBE ser
   configurable.
 

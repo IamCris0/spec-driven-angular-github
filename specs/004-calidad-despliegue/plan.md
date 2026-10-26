@@ -21,6 +21,7 @@ origen.
 | Paquete o herramienta | Dónde | Por qué | Alternativa descartada |
 |---|---|---|---|
 | `@playwright/test` | `e2e/` (proyecto aparte, solo desarrollo) | Pruebas de punta a punta con navegadores reales, espera automática y reporte con capturas (RF-027) | Cypress (más pesado, un solo navegador en la versión gratuita); Selenium (más código para lo mismo) |
+| `express-rate-limit` | backend | Límite de peticiones por IP (RF-032), la librería que CodeQL reconoce para cerrar la alerta `js/missing-rate-limiting` | Middleware propio (CodeQL no lo reconoce y es fácil equivocarse con las ventanas de tiempo) |
 | Imagen `node:22-slim` | Dockerfile del backend | Misma versión de Node que el CI; `slim` usa glibc, compatible con los binarios precompilados de `better-sqlite3` | `node:22-alpine` (musl obliga a compilar `better-sqlite3`) |
 | Imagen `nginx:1.27-alpine` | Dockerfile del frontend | Sirve archivos estáticos y hace de proxy de `/api` en ~10 MB | Servir el build desde Express (mezcla responsabilidades) |
 | `github/codeql-action` | Workflow `codeql.yml` | Análisis de seguridad gratuito para repositorios públicos (RF-029) | Herramientas externas que piden cuenta |
@@ -32,6 +33,10 @@ origen.
 | GET | `/health` | `{ "status": "ok" }`, sin token | 200 |
 
 `FRONTEND_ORIGIN` (por defecto `http://localhost:4200`) define el origen permitido por CORS.
+
+Límite de peticiones: 300 por minuto por IP en `/api/*` salvo `/api/health` (`RATE_LIMIT_PER_MINUTE`), con las
+cabeceras `RateLimit-*` estándar. Detrás de nginx se confía en el primer *proxy* (`trust proxy = 1`) para leer la IP
+real del cliente.
 
 ## Frontend
 

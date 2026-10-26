@@ -15,6 +15,7 @@
 ### Puertas de calidad
 - [ ] T056 [H22] Umbral de cobertura del 95 % y cobertura en el resumen del job `backend`
 - [ ] T057 [P] [H22] Workflow `codeql.yml`
+- [ ] T064 [H22] Pruebas y límite de peticiones por IP (alerta de CodeQL)
 
 ### Punta a punta
 - [ ] T058 [H21] Proyecto `e2e/` con Playwright y las pruebas del recorrido completo
