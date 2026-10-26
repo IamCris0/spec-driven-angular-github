@@ -53,6 +53,37 @@ jobs:
       - run: npx ng build
       - run: npx ng test --no-watch
 
+  # Pruebas de punta a punta (specs/004-calidad-despliegue, H21): Playwright levanta la API y ng serve
+  # (e2e/playwright.config.ts) y Chromium recorre la aplicación como un usuario.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+            e2e/package-lock.json
+      - run: npm ci
+        working-directory: backend
+      - run: npm ci
+        working-directory: frontend
+      - run: npm ci
+        working-directory: e2e
+      - run: npx playwright install --with-deps chromium
+        working-directory: e2e
+      - run: npx playwright test
+        working-directory: e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+          retention-days: 14
+
   # Deploy simulado (T023): solo en push a main y con backend y frontend en verde,
   # publica el build del frontend como artefacto descargable del run.
   deploy:

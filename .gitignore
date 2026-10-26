@@ -42,3 +42,7 @@ Thumbs.db
 
 # Marca de la API en marcha junto a la base (npm run restore la consulta)
 *.db.pid
+
+# Reportes de las pruebas de punta a punta
+e2e/test-results/
+e2e/playwright-report/
