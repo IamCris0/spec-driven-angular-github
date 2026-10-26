@@ -7,7 +7,7 @@ sentido después. Complementa la [guía para el docente](guia-docente.md) y el [
 
 | # | Paso | Cómo | Quién |
 |---|---|---|---|
-| 1 | Fusionar los PR pendientes **en orden** | #39 → #40 → #41 → #43 (y luego el de esta guía), cada uno con su revisión escrita y el pipeline en verde | Autor |
+| 1 | Fusionar los PR pendientes **en orden** | #39 → #40 → #41 → #43 → #44, cada uno con su revisión escrita y el pipeline en verde | Autor |
 | 2 | Llevar `develop` a `main` | PR `develop` → `main`; al fusionarlo corre el job `deploy` | Autor |
 | 3 | Publicar las versiones v3 y v4 | `git tag -a v4.0.0 -m "TaskFlow v4.0.0"` y `git push origin v4.0.0`: el workflow `release` crea la versión con el build | Autor (o el pipeline) |
 | 4 | Tablero de GitHub Projects | `gh auth refresh -s project`, crear el proyecto con las columnas *Por hacer*, *En progreso*, *En revisión* y *Hecho* y agregar las issues | Autor |
