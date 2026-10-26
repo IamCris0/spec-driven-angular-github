@@ -60,8 +60,10 @@ function runsFromText(text, style = {}) {
     );
 }
 
+// &amp; va al final: si fuera primero, "&amp;lt;" (el texto "&lt;") terminaría como "<" (alerta de CodeQL
+// js/double-escaping).
 const decode = (s) =>
-  s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+  s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 
 function inline(list = [], style = {}) {
   const runs = [];
