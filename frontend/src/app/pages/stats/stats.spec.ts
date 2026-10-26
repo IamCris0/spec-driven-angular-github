@@ -3,8 +3,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Stats as StatsData } from '../../models/task';
 import { Stats } from './stats';
+import { API_URL } from '../../api';
 
-const URL = 'http://localhost:3000/api/stats';
+const URL = `${API_URL}/stats`;
 
 const data: StatsData = {
   total: 8,

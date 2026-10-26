@@ -1,0 +1,30 @@
+name: Error
+description: Algo no funciona como dice la especificación
+labels: [bug]
+body:
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para reproducirlo
+      placeholder: |
+        1. Inicia sesión
+        2. Crea una tarea con …
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Qué esperabas y qué pasó
+      description: Si puedes, cita el escenario de spec.md que no se cumple.
+    validations:
+      required: true
+  - type: input
+    id: entorno
+    attributes:
+      label: Entorno
+      placeholder: Windows 11, Chrome 140, Node 22
+  - type: markdown
+    attributes:
+      value: >
+        El arreglo empieza con una prueba que falla (TDD) y va en una rama `fix/NNN-nombre`.

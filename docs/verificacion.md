@@ -57,7 +57,7 @@ recargar la página, editar, eliminar con confirmación, filtrar por responsable
 | CE-001 Crear una tarea en menos de 30 s | Solo el título es obligatorio y el formulario está siempre visible. No se cronometró con usuarios reales | Pendiente de medir con un usuario |
 | CE-002 El 100 % de los cambios de estado persisten al recargar | La API guarda en SQLite antes de responder; verificado en punta a punta con recarga | Cumple |
 | CE-003 Las historias P1 tienen pruebas automatizadas en GitHub Actions | Jobs `backend` y `frontend` en verde en los PR #3 y #4, que incluyen las pruebas de H1, H2 y H3 | Cumple |
-| CE-004 Nada llega a `main` sin PR aprobado y pipeline en verde | Ver abajo | **No cumple todavía** |
+| CE-004 Nada llega a `main` sin PR aprobado y pipeline en verde | Ver abajo | **Cumple desde el 2026-10-10**, adaptado a un equipo de una persona |
 
 ### CE-004 y Principio III de la constitución
 
@@ -76,6 +76,13 @@ Para cumplirlo, en **Settings → Branches → Add rule** para `main` y `develop
 3. Do not allow bypassing the above settings.
 
 Después, actualizar `develop` con un PR desde `main` y abrir los siguientes PR hacia `develop`.
+
+**Actualización (2026-10-10).** `main` y `develop` quedaron protegidas: Pull Request obligatorio, checks
+`backend` y `frontend` obligatorios, sin excepciones para administradores y sin force push ni borrado (issue #36).
+El proyecto es individual y GitHub no permite aprobar un PR propio, así que la regla exige 0 aprobaciones y la
+constitución 1.1.0 sustituye la aprobación por una revisión escrita en el PR, asistida por IA (ver
+[`flujo-de-trabajo.md`](flujo-de-trabajo.md)). Los cambios anteriores a esa fecha (PR #1 a #20 y dos push directos)
+se mantienen como están: el historial no se reescribe.
 
 ## Hallazgo corregido durante la verificación
 
@@ -189,3 +196,136 @@ CE-004 sigue sin cumplirse: `main` y `develop` siguen sin protección de ramas p
   distintas).
 - El token se guarda en `localStorage`; el plan de la v2 explica por qué se acepta y cuál sería la alternativa en
   producción.
+
+---
+
+# Verificación de TaskFlow v3 (T052)
+
+Comprobación de [`003-respaldos-validaciones/spec.md`](../specs/003-respaldos-validaciones/spec.md) contra la rama
+`feature/013-respaldos-validaciones` (issue #32).
+
+**Fecha**: 2026-10-10
+
+## Cómo se verificó
+
+| Tipo | Herramienta | Resultado |
+|---|---|---|
+| Pipeline | GitHub Actions en el PR #39 (run 38091312816) | `backend` y `frontend` en verde |
+| Pruebas de la API | Jest + Supertest | 242 en verde (88 nuevas); cobertura del 99 % de las líneas y del 89 % de las ramas |
+| Pruebas del frontend | Vitest + jsdom | 173 en verde (35 nuevas) |
+| Compilación | `ng build` | Sin errores ni avisos |
+| `npm audit` | `backend` y `frontend` | 0 vulnerabilidades |
+| Punta a punta | API real + `ng serve` + navegador | Todos los escenarios en verde (ver abajo) |
+
+Recorridos de punta a punta:
+
+- **Respaldo automático**: al arrancar, la API creó `taskflow-<fecha>.db` en la carpeta de respaldos.
+- **Restauración (CE-009)**: con 4 tareas, un comentario y una cuenta, `npm run backup` con la API en marcha; se
+  detuvo la API, se **borró** la base, `npm run restore` listó los respaldos y `npm run restore -- <nombre>` la
+  recuperó. Desde detener la API hasta terminar la restauración pasaron **2 segundos**. Al volver a arrancar, la
+  cuenta inició sesión y estaban las 4 tareas con su comentario.
+- **Exportar e importar**: se exportaron 3 tareas, se borraron todas, se eligió el archivo en "Respaldos" (vista
+  previa: "El archivo tiene 3 tareas · exportado por Ana Torres") y se importaron. Al importar otra vez el mismo
+  archivo no se duplicó nada.
+- **Validaciones**: registro con "solo-letras" → "La contraseña debe incluir letras y números"; fecha límite
+  `1990-01-01` → 400; cuerpo `title=form` → 415; cabeceras `X-Content-Type-Options`, `X-Frame-Options` y
+  `Referrer-Policy` presentes también en las respuestas 401.
+- **Móvil**: 375 px exactos en "Respaldos" y en el tablero con la barra superior de tres enlaces.
+
+## Historias de usuario
+
+| Historia | Evidencia | Estado |
+|---|---|---|
+| H15 Respaldo automático (P1) | `backup.test.js` (copia, rotación, programación, fallo sin detener la API), punta a punta | Cumple |
+| H16 Respaldo manual y restauración (P1) | `backup.test.js` (validación y restauración), `backup-cli.test.js`, punta a punta | Cumple |
+| H17 Exportar las tareas (P2) | `backup-routes.test.js`, `backup.service.spec.ts`, `backup.spec.ts`, punta a punta | Cumple |
+| H18 Importar tareas (P2) | `backup-routes.test.js` (atómico, sin duplicados, 9 casos inválidos), `backup.spec.ts`, punta a punta | Cumple |
+| H19 Validaciones más estrictas (P1) | `validation.test.js`, `task-form.spec.ts`, `register.spec.ts`, punta a punta | Cumple |
+
+## Criterios de éxito
+
+| Criterio | Resultado | Estado |
+|---|---|---|
+| CE-009 Recuperar el tablero con `npm run restore` en menos de 2 minutos | 2 segundos tras borrar la base (ver arriba) | Cumple |
+| CE-010 Exportar e importar reproduce las mismas tareas | Prueba que exporta de una instalación e importa en otra vacía y compara los siete campos | Cumple |
+| CE-011 Historias nuevas con pruebas en GitHub Actions | Jobs `backend` y `frontend` en verde en el PR #39 (run 38091312816), con las 80 pruebas nuevas de la API y las 33 del frontend | Cumple |
+
+## Hallazgos corregidos durante la verificación y la revisión del PR #39
+
+La revisión de código del PR (asistida por IA, ver el comentario del PR) encontró seis problemas, corregidos con
+sus pruebas: `BACKUP_INTERVAL_HOURS` mayor que 596 desbordaba `setInterval` y la API respaldaba cada milisegundo;
+restaurar dejaba el `-journal` de la base anterior, que SQLite habría aplicado a la base restaurada; dos tareas sin
+fecha y con el mismo título se tomaban por duplicadas al importar; el formulario aceptaba años de cinco cifras;
+elegir dos archivos seguidos podía mostrar la vista previa del primero; y exportar copiaba arreglos en cada
+comentario.
+
+Después se pidió una segunda revisión a **GitHub Copilot Chat** (plan Free) sobre `backend/src/backup.js`. De sus
+cinco observaciones, dos eran válidas y se corrigieron con pruebas: restaurar con la API en marcha (ahora la API
+deja un archivo `.pid` y `restore` se niega) y un intervalo diminuto, que también respaldaría casi cada
+milisegundo (mínimo 0,1 horas). Las otras tres eran falsos positivos: no hay promesas sin manejar, copiar el
+`-wal` después de `db.backup()` dañaría el respaldo y cerrar una conexión de solo lectura no falla. Es un ejemplo
+del Principio VI: la IA asiste, pero cada sugerencia se verifica antes de aplicarla.
+
+Con el tercer enlace ("Respaldos"), la barra superior medía 415 px en una pantalla de 375 px y el botón "Cerrar
+sesión" quedaba fuera. Ahora, por debajo de 640 px, los enlaces muestran solo su ícono (el nombre sigue disponible
+para lectores de pantalla y como `title`).
+
+## Limitaciones conocidas de la v3
+
+- Los respaldos se guardan en el mismo disco que la base: protegen de borrados y errores, no de que se dañe el
+  disco. En producción la carpeta se copiaría a otro servidor o a la nube.
+- Para restaurar hay que detener la API.
+- Importar no recupera los comentarios (ver "Fuera de alcance" en la especificación); la copia de la base sí.
+
+---
+
+# Verificación de TaskFlow v4 (T063)
+
+Comprobación de [`004-calidad-despliegue/spec.md`](../specs/004-calidad-despliegue/spec.md) contra la rama
+`feature/016-calidad-despliegue` (issue #42, PR #43).
+
+**Fecha**: 2026-10-26
+
+## Cómo se verificó
+
+| Tipo | Herramienta | Resultado |
+|---|---|---|
+| Pruebas de la API | Jest + Supertest | 251 en verde (9 nuevas); cobertura del 99 % de las líneas, por encima del mínimo del 95 % |
+| Pruebas del frontend | Vitest + jsdom | 174 en verde (1 nueva: la ruta `/respaldos`) |
+| Pruebas de punta a punta | Playwright, Chromium en el pipeline y Edge en local | 6 de 6 en verde en ambos |
+| Contenedores | Job `docker` del pipeline | `docker compose up --build`, `/api/health`, un registro y la ruta `/respaldos` a través de nginx: en verde |
+| Seguridad | CodeQL (`security-and-quality`) | 2 alertas encontradas y corregidas en el mismo PR (ver abajo); 0 abiertas |
+| `npm audit` | `backend`, `frontend` y `e2e` | 0 vulnerabilidades, después de corregir las advisories publicadas desde el 10 de octubre |
+| Pipeline | PR #43 | `backend`, `frontend`, `e2e`, `docker` y CodeQL en verde |
+
+## Historias de usuario
+
+| Historia | Evidencia | Estado |
+|---|---|---|
+| H20 Ejecutar con un comando (P1) | `docker-compose.yml`, Dockerfiles, `HEALTHCHECK`, `health.test.js`, job `docker` | Cumple |
+| H21 Pruebas de punta a punta en el pipeline (P1) | `e2e/tests/taskflow.spec.ts`, job `e2e` con el reporte como artefacto si falla | Cumple |
+| H22 Puertas de calidad y seguridad (P2) | `coverageThreshold` en `backend/package.json`, resumen de cobertura, `codeql.yml`, `rate-limit.test.js` | Cumple |
+| H23 Versión al crear una etiqueta (P2) | `release.yml` | Cumple; se comprobará con la primera etiqueta después de fusionar |
+| H24 Configuración por entorno (P1) | `API_URL = '/api'`, `proxy.conf.js` con `API_TARGET`, `FRONTEND_ORIGIN`; las pruebas de punta a punta pasan por el proxy | Cumple |
+
+## Criterios de éxito
+
+| Criterio | Resultado | Estado |
+|---|---|---|
+| CE-012 La aplicación funciona con `docker compose up --build` | Job `docker` en verde: API sana, registro y ruta de Angular a través de nginx | Cumple |
+| CE-013 El job `e2e` recorre H6, H9, H10, H17 y H18 | 6 pruebas en verde en el PR #43 (también H7 y H19) | Cumple |
+| CE-014 El pipeline falla con menos del 95 % de cobertura | Comprobado en local con un umbral del 100 %: Jest termina con error | Cumple |
+
+## Hallazgos corregidos durante la verificación
+
+- **CodeQL, `js/missing-rate-limiting` (alta)**: la API no limitaba las peticiones por IP; solo el inicio de sesión
+  tenía límite de intentos. Se agregó `express-rate-limit` (300 peticiones por minuto, `RATE_LIMIT_PER_MINUTE`) con
+  sus pruebas, como RF-032.
+- **CodeQL, `js/unused-local-variable`**: `app.routes.spec.ts` importaba la página de respaldos pero no probaba la
+  ruta `/respaldos`; una edición anterior no se había aplicado. Se agregó el caso.
+- **`npm audit`**: aparecieron advisories nuevas, una alta en `body-parser` (backend) y otra alta en
+  `@angular/router` (frontend, código que llega al navegador). Se actualizaron Express (transitiva) y Angular a
+  21.2.25/21.2.28; `undici` de `@angular/build` se fijó en 7.30.1 con un *override*, porque la corrección oficial
+  exige Angular 22.
+- **Prueba de punta a punta de respaldos**: suponía que el respaldo tenía una sola tarea, pero el tablero es compartido
+  por todos los usuarios; ahora busca su propia tarea por título.

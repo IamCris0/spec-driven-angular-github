@@ -25,7 +25,17 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
-      - run: npm test
+      # Falla si la cobertura de líneas baja del 95 % (coverageThreshold en package.json, RF-028).
+      - run: npm run test:coverage
+      - name: Cobertura en el resumen del job
+        if: always()
+        run: |
+          node -e "
+            const total = require('./coverage/coverage-summary.json').total;
+            const rows = ['lines', 'statements', 'functions', 'branches']
+              .map((k) => '| ' + k + ' | ' + total[k].pct + ' % |');
+            console.log(['### Cobertura de la API', '', '| Métrica | Cobertura |', '|---|---|', ...rows].join('\n'));
+          " >> "$GITHUB_STEP_SUMMARY"
 
   frontend:
     runs-on: ubuntu-latest
@@ -42,6 +52,63 @@ jobs:
       - run: npm ci
       - run: npx ng build
       - run: npx ng test --no-watch
+
+  # Pruebas de punta a punta (specs/004-calidad-despliegue, H21): Playwright levanta la API y ng serve
+  # (e2e/playwright.config.ts) y Chromium recorre la aplicación como un usuario.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+            e2e/package-lock.json
+      - run: npm ci
+        working-directory: backend
+      - run: npm ci
+        working-directory: frontend
+      - run: npm ci
+        working-directory: e2e
+      - run: npx playwright install --with-deps chromium
+        working-directory: e2e
+      - run: npx playwright test
+        working-directory: e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report
+          retention-days: 14
+
+  # Contenedores (specs/004-calidad-despliegue, H20, CE-012): construye las imágenes, las levanta con
+  # docker compose y comprueba, a través de nginx, que la API responde y que las rutas de Angular cargan.
+  docker:
+    runs-on: ubuntu-latest
+    env:
+      JWT_SECRET: clave-del-pipeline
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose up -d --build
+      - name: Esperar a que la API responda a través de nginx
+        run: |
+          for i in $(seq 1 40); do
+            if curl -fsS http://localhost:8080/api/health; then exit 0; fi
+            sleep 3
+          done
+          docker compose logs
+          exit 1
+      - name: Probar el registro y una ruta de Angular
+        run: |
+          curl -fsS -X POST http://localhost:8080/api/auth/register \
+            -H 'Content-Type: application/json' \
+            -d '{"name":"Pipeline","email":"ci@taskflow.ec","password":"clave2026"}' | grep -q '"token"'
+          curl -fsS http://localhost:8080/respaldos | grep -q '<app-root'
+      - if: always()
+        run: docker compose down -v
 
   # Deploy simulado (T023): solo en push a main y con backend y frontend en verde,
   # publica el build del frontend como artefacto descargable del run.

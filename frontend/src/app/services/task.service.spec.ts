@@ -4,8 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { Comment, Stats, Task, TaskInput } from '../models/task';
 import { TaskService } from './task.service';
-
-const API_URL = 'http://localhost:3000/api';
+import { API_URL } from '../api';
 
 const task: Task = {
   id: 1,

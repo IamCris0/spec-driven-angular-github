@@ -6,8 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { fakeToken } from '../testing/fake-token';
 import { authInterceptor } from './auth.interceptor';
-
-const API_URL = 'http://localhost:3000/api';
+import { API_URL } from '../api';
 
 describe('authInterceptor', () => {
   let http: HttpClient;
