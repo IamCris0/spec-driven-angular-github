@@ -1,4 +1,5 @@
 const express = require('express');
+const { rateLimit } = require('express-rate-limit');
 const { createAuth } = require('./auth');
 const { createBackupRouter } = require('./backup.routes');
 const { createCommentsRepository } = require('./comments.repository');
@@ -11,6 +12,8 @@ const { createUsersRepository } = require('./users.repository');
 // (specs/004-calidad-despliegue, H24); con el proxy de ng serve o nginx, el navegador usa el mismo origen.
 const DEFAULT_FRONTEND_ORIGIN = 'http://localhost:4200';
 const BACKUP_BODY_LIMIT = '2mb';
+// Peticiones por minuto y por IP (specs/004-calidad-despliegue, RF-032).
+const DEFAULT_RATE_LIMIT_PER_MINUTE = 300;
 
 const CLIENT_ERROR_MESSAGES = {
   'entity.parse.failed': 'El cuerpo de la petición no es un JSON válido',
@@ -78,10 +81,16 @@ function errorHandler(err, req, res, next) {
  * @param options.jwtSecret Clave para firmar los tokens (obligatoria).
  * @param options.bcryptRounds Coste de bcrypt; las pruebas usan uno bajo para ir más rápido.
  * @param options.frontendOrigin Origen al que CORS permite leer las respuestas.
+ * @param options.rateLimitPerMinute Peticiones por minuto y por IP antes de responder 429.
  */
 function createApp(
   db,
-  { jwtSecret, bcryptRounds = 10, frontendOrigin = DEFAULT_FRONTEND_ORIGIN } = {},
+  {
+    jwtSecret,
+    bcryptRounds = 10,
+    frontendOrigin = DEFAULT_FRONTEND_ORIGIN,
+    rateLimitPerMinute = DEFAULT_RATE_LIMIT_PER_MINUTE,
+  } = {},
 ) {
   if (!jwtSecret) {
     throw new Error('createApp necesita jwtSecret para firmar los tokens');
@@ -91,10 +100,23 @@ function createApp(
   const auth = createAuth({ users: createUsersRepository(db), jwtSecret, bcryptRounds });
 
   app.disable('x-powered-by');
+  // Detrás de nginx (Docker), la IP del cliente llega en X-Forwarded-For desde el primer proxy.
+  app.set('trust proxy', 1);
   app.use(securityHeaders);
   app.use(cors(frontendOrigin));
   // Sin sesión: lo consultan Docker y cualquier monitor para saber si la API está viva (H20).
   app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+  // Después de /api/health, para que Docker y los monitores nunca reciban 429.
+  app.use(
+    '/api',
+    rateLimit({
+      windowMs: 60_000,
+      limit: rateLimitPerMinute,
+      standardHeaders: 'draft-7',
+      legacyHeaders: false,
+      message: { error: 'Demasiadas peticiones, espera un momento' },
+    }),
+  );
   app.use(requireJsonBody);
   // Los respaldos pueden pesar hasta 2 MB; el resto de la API se queda con el límite de 100 KB. Va antes
   // del express.json() general y comprueba la sesión antes de leer el cuerpo.

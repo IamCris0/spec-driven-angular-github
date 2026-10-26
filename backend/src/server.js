@@ -35,7 +35,8 @@ startBackupSchedule(db, backups);
 
 // FRONTEND_ORIGIN vacía o ausente: se usa el origen de ng serve (specs/004-calidad-despliegue, H24).
 const frontendOrigin = process.env.FRONTEND_ORIGIN || undefined;
+const rateLimitPerMinute = Number(process.env.RATE_LIMIT_PER_MINUTE) || undefined;
 
-createApp(db, { jwtSecret, frontendOrigin }).listen(PORT, () => {
+createApp(db, { jwtSecret, frontendOrigin, rateLimitPerMinute }).listen(PORT, () => {
   console.log(`API de TaskFlow escuchando en http://localhost:${PORT}/api`);
 });

@@ -15,6 +15,7 @@ de **GitHub Spec Kit**.
 | v1 | Tablero Kanban con tres columnas, crear, editar, eliminar, mover entre estados y filtrar por responsable | [`001-gestor-tareas`](specs/001-gestor-tareas/spec.md) |
 | v2 | Cuentas de usuario con inicio de sesión (JWT), autor de cada tarea, fecha límite y tareas vencidas, búsqueda, orden, arrastrar y soltar, comentarios, estadísticas, diseño con Tailwind CSS, modo oscuro y versión móvil | [`002-taskflow-v2`](specs/002-taskflow-v2/spec.md) |
 | v3 | Respaldo automático de la base con rotación, `npm run backup` / `npm run restore`, exportar e importar las tareas en JSON desde la página **Respaldos** y validaciones más estrictas en la API y en los formularios | [`003-respaldos-validaciones`](specs/003-respaldos-validaciones/spec.md) |
+| v4 | Ejecución con `docker compose up`, `/api/health`, pruebas de punta a punta con Playwright en el pipeline, cobertura mínima del 95 % en la API, análisis de seguridad con CodeQL, versiones automáticas al crear una etiqueta y API relativa con *proxy* | [`004-calidad-despliegue`](specs/004-calidad-despliegue/spec.md) |
 
 **Seguridad**: contraseñas guardadas solo como hash bcrypt, tokens JWT que expiran en 8 horas, toda la API de
 tareas y estadísticas exige sesión, el inicio de sesión no revela si el correo existe y se bloquea 15 minutos tras
@@ -51,7 +52,29 @@ envía las cabeceras `X-Content-Type-Options`, `X-Frame-Options` y `Referrer-Pol
 |---|---|---|
 | ![Totales, tareas por estado y avance por responsable](docs/capturas/estadisticas.png) | ![Pantalla de inicio de sesión](docs/capturas/login.png) | ![Tablero en una pantalla de 375 px](docs/capturas/movil.png) |
 
-## Requisitos
+## Ejecución con Docker (un comando)
+
+Solo hace falta [Docker Desktop](https://www.docker.com/products/docker-desktop/):
+
+```bash
+git clone https://github.com/IamCris0/spec-driven-angular-github.git
+cd spec-driven-angular-github
+docker compose up --build
+```
+
+Abre http://localhost:8080 y entra en **Regístrate**. nginx sirve la aplicación y reenvía `/api` a la API; la base
+y los respaldos viven en volúmenes, así que sobreviven a `docker compose down` (`down -v` los borra). Para un uso
+real define `JWT_SECRET` (por ejemplo en un archivo `.env` junto a `docker-compose.yml`, que Git ignora).
+
+Restaurar un respaldo dentro de Docker:
+
+```bash
+docker compose stop api
+docker compose run --rm api npm run restore -- <nombre.db>
+docker compose start api
+```
+
+## Requisitos (ejecución sin Docker)
 
 - **Node.js 22 LTS** (versión del plan y del CI). También funciona con Node 24.
 - npm (incluido con Node.js) y Git.
@@ -80,6 +103,9 @@ npm start          # o "npm run dev" para reiniciar al cambiar el código
 cd frontend
 npx ng serve
 ```
+
+El frontend llama a la API por la ruta relativa `/api`: `ng serve` la reenvía a `http://localhost:3000`
+([`proxy.conf.js`](frontend/proxy.conf.js)). Para usar otra API, define `API_TARGET` antes de `ng serve`.
 
 Abre http://localhost:4200, entra en **Regístrate** y crea tu cuenta: el tablero solo se ve con sesión iniciada.
 
@@ -140,17 +166,31 @@ npm test                    # Jest + Supertest con SQLite en memoria (242 prueba
 cd frontend
 npx ng build                # compilación de producción
 npx ng test --no-watch      # Vitest + jsdom, sin navegador (173 pruebas)
+
+cd backend
+npm run test:coverage       # igual que npm test, y falla si la cobertura de líneas baja del 95 %
+
+cd e2e
+npm ci
+npx playwright install chromium   # una vez (o usa el Edge o Chrome instalados: ver abajo)
+npx playwright test               # 6 pruebas de punta a punta en un navegador real
 ```
+
+Las pruebas de punta a punta levantan su propia API (puerto 3100) y su propio `ng serve` (4300) con una base nueva,
+así que no chocan con la aplicación que tengas abierta. Para no descargar Chromium en Windows:
+`$env:PW_CHANNEL = "msedge"; npx playwright test` (PowerShell). `npx playwright show-report` abre el reporte.
 
 Son los mismos pasos que ejecuta el pipeline. Si una prueba falla en local, también fallará en el Pull Request.
 
 ## API REST
 
-Base: `http://localhost:3000/api`. Todas las rutas salvo `/auth/register` y `/auth/login` exigen la cabecera
+Base: `http://localhost:3000/api` (o `http://localhost:8080/api` con Docker). Todas las rutas salvo `/health`,
+`/auth/register` y `/auth/login` exigen la cabecera
 `Authorization: Bearer <token>`.
 
 | Método | Ruta | Descripción | Respuestas |
 |---|---|---|---|
+| GET | `/health` | `{ "status": "ok" }`, para Docker y monitores | 200 |
 | POST | `/auth/register` | Crea una cuenta y devuelve `{ token, user }` | 201, 400, 409 |
 | POST | `/auth/login` | Inicia sesión y devuelve `{ token, user }` | 200, 400, 401, 429 |
 | GET | `/auth/me` | Usuario de la sesión | 200, 401 |
@@ -187,12 +227,28 @@ En PowerShell usa `curl.exe` en lugar de `curl`.
 
 | Job | Pasos | Cuándo |
 |---|---|---|
-| `backend` | `npm ci` → `npm test` | Siempre |
+| `backend` | `npm ci` → pruebas con cobertura (mínimo 95 % de líneas) → cobertura en el resumen del run | Siempre |
 | `frontend` | `npm ci` → `ng build` → `ng test` | Siempre |
-| `deploy` | build del frontend publicado como artefacto `taskflow-frontend` | Solo en push a `main`, con los dos anteriores en verde |
+| `e2e` | Playwright levanta la API y `ng serve` y Chromium recorre la aplicación; sube el reporte si falla | Siempre |
+| `docker` | `docker compose up --build` y comprueba `/api/health`, un registro y una ruta de Angular a través de nginx | Siempre |
+| `deploy` | build del frontend publicado como artefacto `taskflow-frontend` | Solo en push a `main`, con `backend` y `frontend` en verde |
 
-El deploy es simulado (el despliegue real está fuera de alcance): el build se descarga desde la pestaña
-**Actions → run → Artifacts** y se puede servir con cualquier servidor de archivos estáticos.
+Además:
+
+| Workflow | Qué hace | Cuándo |
+|---|---|---|
+| [`codeql.yml`](.github/workflows/codeql.yml) | Análisis de seguridad del código JavaScript y TypeScript (pestaña **Security**) | Push y PR a `main` y `develop`, y cada lunes |
+| [`release.yml`](.github/workflows/release.yml) | Compila el frontend y publica la versión en **Releases** con el build comprimido | Al subir una etiqueta `v*` |
+| Dependabot | Abre PR con actualizaciones de dependencias | Cada semana |
+
+`main` y `develop` están protegidas: no se puede fusionar sin PR ni con `backend` o `frontend` en rojo.
+
+Para publicar una versión:
+
+```bash
+git tag -a v4.0.0 -m "TaskFlow v4.0.0"
+git push origin v4.0.0
+```
 
 ## Problemas comunes
 
@@ -201,8 +257,9 @@ El deploy es simulado (el despliegue real está fuera de alcance): el build se d
 | `npx ng` pregunta por *analytics* | Responde `No`. Si respondes `Yes`, el CLI escribe un ID en `frontend/angular.json`: no lo subas al repositorio. |
 | `EPERM` al instalar en Windows | OneDrive bloquea `node_modules`: pausa la sincronización o mueve el proyecto fuera de OneDrive (por ejemplo `C:\dev`). |
 | `npm install` falla con `edgesOut` en el frontend | Usa `npm ci`, que respeta el `package-lock.json`. |
-| Puerto 3000 o 4200 ocupado | Cierra el proceso anterior; el frontend espera la API en el puerto 3000. |
-| La interfaz dice "No se pudo conectar con el servidor" | La API no está corriendo: inicia `npm start` en `backend/`. |
+| Puerto 3000, 4200 u 8080 ocupado | Cierra el proceso anterior. Para usar otra API con `ng serve`, define `API_TARGET`. |
+| La interfaz dice "No se pudo conectar con el servidor" | La API no está corriendo: inicia `npm start` en `backend/` (con Docker: `docker compose ps`). |
+| `docker compose up` falla al construir en Windows | Abre Docker Desktop y espera a que diga *Engine running*. |
 | Te saca a la pantalla de inicio de sesión al reiniciar la API | Normal sin `JWT_SECRET`: defínela (ver arriba) o vuelve a iniciar sesión. |
 | `npm run restore` falla con `EBUSY` o `EPERM` | La API sigue usando la base: detenla (Ctrl+C) y vuelve a intentarlo. |
 | "Demasiados intentos, espera unos minutos" | 5 contraseñas incorrectas seguidas bloquean ese correo 15 minutos (o reinicia la API). |
@@ -214,7 +271,8 @@ El deploy es simulado (el despliegue real está fuera de alcance): el build se d
 specs/
 ├── 001-gestor-tareas/            v1: spec.md, plan.md, tasks.md
 ├── 002-taskflow-v2/              v2: cuentas, diseño y productividad
-└── 003-respaldos-validaciones/   v3: respaldos y validaciones
+├── 003-respaldos-validaciones/   v3: respaldos y validaciones
+└── 004-calidad-despliegue/       v4: Docker, pruebas de punta a punta, CodeQL y versiones
 docs/
 ├── flujo-de-trabajo.md           Ramas, commits, PR, code review y gestión
 ├── verificacion.md               Verificación de requisitos y criterios de éxito
@@ -230,6 +288,7 @@ backend/
 │   ├── backup.routes.js          Exportar e importar tareas en JSON
 │   └── *.repository.js           Consultas SQL (tareas, usuarios, comentarios)
 ├── scripts/                      npm run backup y npm run restore
+├── Dockerfile                    Imagen de la API
 └── tests/                        Pruebas de la API (Jest + Supertest)
 frontend/src/app/
 ├── models/                       Task, User y utilidades (vencidas, orden)
@@ -237,15 +296,19 @@ frontend/src/app/
 ├── interceptors/, guards/        Token en cada petición y rutas protegidas
 ├── pages/                        login, register, stats, backup
 └── components/                   board, task-card, task-form, task-comments
-.github/workflows/                Pipeline CI/CD
+frontend/Dockerfile, nginx.conf   Imagen del frontend con nginx
+frontend/proxy.conf.js            Proxy de /api para ng serve
+e2e/                              Pruebas de punta a punta (Playwright)
+docker-compose.yml                TaskFlow completo con un comando
+.github/workflows/                ci.yml, codeql.yml, release.yml
 ```
 
 ## Flujo SDD aplicado
 
 1. **Constitución** → [`constitution.md`](.specify/memory/constitution.md)
-2. **Especificación** → [v1](specs/001-gestor-tareas/spec.md), [v2](specs/002-taskflow-v2/spec.md) y [v3](specs/003-respaldos-validaciones/spec.md)
-3. **Plan técnico** → [v1](specs/001-gestor-tareas/plan.md), [v2](specs/002-taskflow-v2/plan.md) y [v3](specs/003-respaldos-validaciones/plan.md)
-4. **Tareas** → [v1](specs/001-gestor-tareas/tasks.md), [v2](specs/002-taskflow-v2/tasks.md) y [v3](specs/003-respaldos-validaciones/tasks.md)
+2. **Especificación** → [v1](specs/001-gestor-tareas/spec.md), [v2](specs/002-taskflow-v2/spec.md), [v3](specs/003-respaldos-validaciones/spec.md) y [v4](specs/004-calidad-despliegue/spec.md)
+3. **Plan técnico** → [v1](specs/001-gestor-tareas/plan.md), [v2](specs/002-taskflow-v2/plan.md), [v3](specs/003-respaldos-validaciones/plan.md) y [v4](specs/004-calidad-despliegue/plan.md)
+4. **Tareas** → [v1](specs/001-gestor-tareas/tasks.md), [v2](specs/002-taskflow-v2/tasks.md), [v3](specs/003-respaldos-validaciones/tasks.md) y [v4](specs/004-calidad-despliegue/tasks.md)
 5. **Implementación** → ramas `feature/*` con Pull Requests
 
 Detalle del flujo de trabajo: [`docs/flujo-de-trabajo.md`](docs/flujo-de-trabajo.md).
