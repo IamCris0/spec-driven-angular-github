@@ -6,8 +6,8 @@ import { firstValueFrom } from 'rxjs';
 import { User } from '../models/user';
 import { fakeToken } from '../testing/fake-token';
 import { AuthService } from './auth.service';
+import { API_URL } from '../api';
 
-const API_URL = 'http://localhost:3000/api';
 const STORAGE_KEY = 'taskflow.session';
 const ana: User = {
   id: 1,
