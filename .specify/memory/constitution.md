@@ -12,8 +12,10 @@ Cada historia de usuario tiene pruebas que se escriben antes que la implementaci
 El pipeline de CI rechaza cualquier Pull Request cuyas pruebas fallen.
 
 ## III. Todo cambio pasa por un Pull Request
-Nadie hace `push` directo a `main` ni a `develop`. Cada cambio vive en una rama `feature/*`, `fix/*` o `docs/*`,
-se revisa en un Pull Request con al menos una aprobación y se integra solo si el pipeline está en verde.
+Nadie hace `push` directo a `main` ni a `develop`. Cada cambio vive en una rama `feature/*`, `fix/*`, `docs/*` o
+`ci/*`, se revisa en un Pull Request y se integra solo si el pipeline está en verde. Con dos o más integrantes, el PR
+necesita al menos una aprobación de otra persona. Con un solo integrante, la revisión la hace el autor con apoyo de
+IA (GitHub Copilot o Claude) y queda escrita en el PR: qué se revisó, qué se encontró y qué se corrigió.
 
 ## IV. Automatización sobre procesos manuales
 Build, lint y pruebas se ejecutan automáticamente con GitHub Actions. Si una tarea se repite más de dos veces,
@@ -28,7 +30,8 @@ GitHub Copilot y otros asistentes pueden generar código, pero todo código gene
 entiende antes de integrarse. El responsable del cambio es la persona que abre el Pull Request.
 
 ## Gobernanza
-Esta constitución prevalece sobre cualquier otra práctica. Modificarla requiere un Pull Request aprobado por
-ambos integrantes del equipo.
+Esta constitución prevalece sobre cualquier otra práctica. Modificarla requiere un Pull Request revisado según el
+Principio III.
 
-**Versión**: 1.0.0 | **Ratificada**: 2026-09-29
+**Versión**: 1.1.0 | **Ratificada**: 2026-09-29 | **Enmendada**: 2026-10-10 (Principio III y gobernanza: el
+proyecto se desarrolla de forma individual)

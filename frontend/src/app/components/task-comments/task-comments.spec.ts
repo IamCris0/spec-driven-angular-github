@@ -3,8 +3,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Comment } from '../../models/task';
 import { TaskComments } from './task-comments';
+import { API_URL } from '../../api';
 
-const URL = 'http://localhost:3000/api/tasks/7/comments';
+const URL = `${API_URL}/tasks/7/comments`;
 
 const comment = (id: number, body: string, user_name = 'Ana Torres'): Comment => ({
   id,

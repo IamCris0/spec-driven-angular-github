@@ -13,6 +13,9 @@ coverage/
 
 # Base de datos local de SQLite (backend/data/taskflow.db)
 backend/data/
+
+# Respaldos de la base (npm run backup y respaldo automático de la API)
+backend/backups/
 *.db
 *.db-journal
 *.db-shm
@@ -36,3 +39,10 @@ Proyecto Parcial I - PA.pdf
 *.sublime-workspace
 .DS_Store
 Thumbs.db
+
+# Marca de la API en marcha junto a la base (npm run restore la consulta)
+*.db.pid
+
+# Reportes de las pruebas de punta a punta
+e2e/test-results/
+e2e/playwright-report/

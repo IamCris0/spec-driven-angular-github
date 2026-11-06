@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Flujo de trabajo del equipo
+    url: https://github.com/IamCris0/spec-driven-angular-github/blob/main/docs/flujo-de-trabajo.md
+    about: Cómo se trabaja con issues, ramas, Pull Requests y especificaciones

@@ -1,0 +1,36 @@
+# Dependabot revisa cada semana las dependencias y abre Pull Requests hacia develop, que pasan por el
+# mismo pipeline y la misma revisión que cualquier otro cambio (docs/flujo-de-trabajo.md).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /backend
+    schedule:
+      interval: weekly
+    target-branch: develop
+    labels: [ci]
+    commit-message:
+      prefix: build(backend)
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    target-branch: develop
+    labels: [ci]
+    commit-message:
+      prefix: build(frontend)
+    open-pull-requests-limit: 5
+    groups:
+      # Los paquetes de Angular se actualizan juntos para no romper la compilación.
+      angular:
+        patterns: ['@angular/*', '@angular-devkit/*']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    target-branch: develop
+    labels: [ci]
+    commit-message:
+      prefix: ci

@@ -26,10 +26,15 @@ function emailErrors(control: AbstractControl<string>): ValidationErrors | null 
   return EMAIL_PATTERN.test(control.value.trim()) ? null : { message: 'El correo no es válido' };
 }
 
+// La regla de letras y números es de specs/003-respaldos-validaciones (H19).
 function passwordErrors(control: AbstractControl<string>): ValidationErrors | null {
-  return control.value.length < 8
-    ? { message: 'La contraseña debe tener al menos 8 caracteres' }
-    : null;
+  const password = control.value;
+  if (password.length < 8) {
+    return { message: 'La contraseña debe tener al menos 8 caracteres' };
+  }
+  return /\p{L}/u.test(password) && /\p{N}/u.test(password)
+    ? null
+    : { message: 'La contraseña debe incluir letras y números' };
 }
 
 function passwordsMatch(group: AbstractControl): ValidationErrors | null {

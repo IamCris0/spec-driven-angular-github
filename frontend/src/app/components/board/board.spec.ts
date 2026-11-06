@@ -5,8 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Task, TaskStatus } from '../../models/task';
 import { Board } from './board';
-
-const API_URL = 'http://localhost:3000/api';
+import { API_URL } from '../../api';
 
 function makeTask(overrides: Partial<Task>): Task {
   return {
@@ -513,12 +512,10 @@ describe('Board', () => {
       title.value = 'B';
       title.dispatchEvent(new Event('input'));
       root.querySelector('form')!.dispatchEvent(new Event('submit'));
-      http
-        .expectOne(`${API_URL}/tasks`)
-        .flush(makeTask({ id: 2, title: 'B', assignee: 'ana' }), {
-          status: 201,
-          statusText: 'Created',
-        });
+      http.expectOne(`${API_URL}/tasks`).flush(makeTask({ id: 2, title: 'B', assignee: 'ana' }), {
+        status: 201,
+        statusText: 'Created',
+      });
       await fixture.whenStable();
 
       expect(options()).toEqual(['Todos', 'Ana']);

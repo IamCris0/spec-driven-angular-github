@@ -52,12 +52,28 @@ describe('Register', () => {
       { password: '1234567', confirm: '1234567' },
       'La contraseña debe tener al menos 8 caracteres',
     ],
+    [
+      'la contraseña no tiene números',
+      { password: 'solo-letras', confirm: 'solo-letras' },
+      'La contraseña debe incluir letras y números',
+    ],
+    [
+      'la contraseña no tiene letras',
+      { password: '12345678', confirm: '12345678' },
+      'La contraseña debe incluir letras y números',
+    ],
     ['las contraseñas no coinciden', { confirm: 'otra-clave' }, 'Las contraseñas no coinciden'],
   ])('no envía el formulario cuando %s', async (_caso, values, message) => {
     await fill(values);
 
     expect(root.textContent).toContain(message);
     expect(auth.register).not.toHaveBeenCalled();
+  });
+
+  it('explica la regla de la contraseña antes de enviar', () => {
+    expect(root.querySelector('[data-hint="password"]')?.textContent).toContain(
+      'Mínimo 8 caracteres, con letras y números',
+    );
   });
 
   it('crea la cuenta y va al tablero', async () => {

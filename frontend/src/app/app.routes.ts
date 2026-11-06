@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { Board } from './components/board/board';
 import { authGuard, guestGuard } from './guards/auth.guard';
+import { Backup } from './pages/backup/backup';
 import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
 import { Stats } from './pages/stats/stats';
@@ -12,6 +13,12 @@ export const routes: Routes = [
     component: Stats,
     canActivate: [authGuard],
     title: 'Estadísticas · TaskFlow',
+  },
+  {
+    path: 'respaldos',
+    component: Backup,
+    canActivate: [authGuard],
+    title: 'Respaldos · TaskFlow',
   },
   {
     path: 'login',

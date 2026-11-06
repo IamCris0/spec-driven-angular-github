@@ -1,0 +1,99 @@
+<div class="mx-auto max-w-3xl space-y-6">
+  <div>
+    <h2 class="text-2xl font-bold tracking-tight">Respaldos</h2>
+    <p class="text-sm text-slate-500 dark:text-slate-400">
+      Guarda una copia de las tareas o recupera las que se borraron por error
+    </p>
+  </div>
+
+  @if (error(); as message) {
+    <p class="alert-error" role="alert">{{ message }}</p>
+  }
+  @if (success(); as message) {
+    <p class="alert-success" role="status">{{ message }}</p>
+  }
+
+  <section class="card space-y-3">
+    <h3 class="font-semibold">Descargar respaldo</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-300">
+      Un archivo JSON con todas las tareas y sus comentarios. No incluye correos ni contraseñas.
+    </p>
+    <button
+      type="button"
+      class="btn btn-primary"
+      data-action="export"
+      [disabled]="exporting()"
+      (click)="download()"
+    >
+      <svg
+        class="size-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+        />
+      </svg>
+      {{ exporting() ? 'Preparando…' : 'Descargar respaldo' }}
+    </button>
+  </section>
+
+  <section class="card space-y-3">
+    <h3 class="font-semibold">Importar respaldo</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-300">
+      Agrega al tablero las tareas de un archivo descargado aquí. Las que ya existen (mismo título y
+      fecha de creación) se omiten, y si una tarea no es válida no se importa ninguna.
+    </p>
+    <label class="block">
+      <span class="label">Archivo de respaldo (.json, hasta 2 MB)</span>
+      <input
+        #file
+        type="file"
+        accept=".json,application/json"
+        class="block w-full text-sm text-slate-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-indigo-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-indigo-700 hover:file:bg-indigo-100 dark:text-slate-300 dark:file:bg-indigo-500/15 dark:file:text-indigo-200"
+        (change)="choose($event)"
+      />
+    </label>
+
+    @if (pending(); as backup) {
+      <div
+        class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 px-4 py-3 dark:bg-slate-800/60"
+      >
+        <p class="text-sm" data-preview>
+          El archivo tiene <strong>{{ tasks(backup.tasks.length) }}</strong>
+          @if (backup.exported_by) {
+            · exportado por {{ backup.exported_by }}
+          }
+          @if (backup.exported_at) {
+            el {{ backup.exported_at | date: 'dd/MM/yyyy' }}
+          }
+        </p>
+        <button
+          type="button"
+          class="btn btn-primary"
+          data-action="import"
+          [disabled]="importing()"
+          (click)="import(file)"
+        >
+          {{ importing() ? 'Importando…' : 'Importar ' + tasks(backup.tasks.length) }}
+        </button>
+      </div>
+    }
+  </section>
+
+  <section class="card space-y-2 text-sm text-slate-600 dark:text-slate-300">
+    <h3 class="font-semibold text-slate-900 dark:text-slate-100">Copia completa de la base</h3>
+    <p>
+      La API guarda además una copia de toda la base (tareas, comentarios y cuentas) al arrancar y
+      cada 24 horas en
+      <code class="rounded bg-slate-100 px-1 dark:bg-slate-800">backend/backups/</code>. Para
+      recuperarla, detén la API y ejecuta
+      <code class="rounded bg-slate-100 px-1 dark:bg-slate-800">npm run restore</code>.
+    </p>
+  </section>
+</div>
