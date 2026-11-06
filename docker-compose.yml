@@ -1,0 +1,28 @@
+# TaskFlow completo con un comando (specs/004-calidad-despliegue, H20):
+#   docker compose up --build      →  http://localhost:8080
+# Para un despliegue real, define JWT_SECRET en el entorno o en un archivo .env (Git lo ignora).
+services:
+  api:
+    build: ./backend
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-solo-para-la-demo-cambiala-en-produccion}
+      FRONTEND_ORIGIN: http://localhost:8080
+      BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-24}
+      BACKUP_KEEP: ${BACKUP_KEEP:-10}
+    volumes:
+      - taskflow-data:/app/data
+      - taskflow-backups:/app/backups
+    restart: unless-stopped
+
+  web:
+    build: ./frontend
+    ports:
+      - '8080:80'
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  taskflow-data:
+  taskflow-backups:

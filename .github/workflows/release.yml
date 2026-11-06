@@ -1,0 +1,40 @@
+# Versión automática (specs/004-calidad-despliegue, H23): al subir una etiqueta vX.Y.Z se compila el
+# frontend y se publica (o se actualiza) la versión en Releases con el build comprimido.
+#   git tag -a v4.0.0 -m "TaskFlow v4.0.0" && git push origin v4.0.0
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npx ng build
+        working-directory: frontend
+      - name: Comprimir el build
+        run: |
+          cd frontend/dist/frontend/browser
+          zip -r "$GITHUB_WORKSPACE/taskflow-frontend-${GITHUB_REF_NAME}.zip" .
+      - name: Publicar o actualizar la versión
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ZIP="taskflow-frontend-${GITHUB_REF_NAME}.zip"
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$ZIP" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$ZIP" --title "TaskFlow $GITHUB_REF_NAME" --generate-notes
+          fi

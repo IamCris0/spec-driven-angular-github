@@ -1,0 +1,29 @@
+# Análisis de seguridad del código (specs/004-calidad-despliegue, H22). Las alertas aparecen en la pestaña
+# Security → Code scanning. Gratuito en repositorios públicos.
+name: CodeQL
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Cada lunes, para detectar vulnerabilidades nuevas aunque el código no cambie.
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:javascript-typescript

@@ -276,3 +276,56 @@ para lectores de pantalla y como `title`).
   disco. En producción la carpeta se copiaría a otro servidor o a la nube.
 - Para restaurar hay que detener la API.
 - Importar no recupera los comentarios (ver "Fuera de alcance" en la especificación); la copia de la base sí.
+
+---
+
+# Verificación de TaskFlow v4 (T063)
+
+Comprobación de [`004-calidad-despliegue/spec.md`](../specs/004-calidad-despliegue/spec.md) contra la rama
+`feature/016-calidad-despliegue` (issue #42, PR #43).
+
+**Fecha**: 2026-10-26
+
+## Cómo se verificó
+
+| Tipo | Herramienta | Resultado |
+|---|---|---|
+| Pruebas de la API | Jest + Supertest | 251 en verde (9 nuevas); cobertura del 99 % de las líneas, por encima del mínimo del 95 % |
+| Pruebas del frontend | Vitest + jsdom | 174 en verde (1 nueva: la ruta `/respaldos`) |
+| Pruebas de punta a punta | Playwright, Chromium en el pipeline y Edge en local | 6 de 6 en verde en ambos |
+| Contenedores | Job `docker` del pipeline | `docker compose up --build`, `/api/health`, un registro y la ruta `/respaldos` a través de nginx: en verde |
+| Seguridad | CodeQL (`security-and-quality`) | 2 alertas encontradas y corregidas en el mismo PR (ver abajo); 0 abiertas |
+| `npm audit` | `backend`, `frontend` y `e2e` | 0 vulnerabilidades, después de corregir las advisories publicadas desde el 10 de octubre |
+| Pipeline | PR #43 | `backend`, `frontend`, `e2e`, `docker` y CodeQL en verde |
+
+## Historias de usuario
+
+| Historia | Evidencia | Estado |
+|---|---|---|
+| H20 Ejecutar con un comando (P1) | `docker-compose.yml`, Dockerfiles, `HEALTHCHECK`, `health.test.js`, job `docker` | Cumple |
+| H21 Pruebas de punta a punta en el pipeline (P1) | `e2e/tests/taskflow.spec.ts`, job `e2e` con el reporte como artefacto si falla | Cumple |
+| H22 Puertas de calidad y seguridad (P2) | `coverageThreshold` en `backend/package.json`, resumen de cobertura, `codeql.yml`, `rate-limit.test.js` | Cumple |
+| H23 Versión al crear una etiqueta (P2) | `release.yml` | Cumple; se comprobará con la primera etiqueta después de fusionar |
+| H24 Configuración por entorno (P1) | `API_URL = '/api'`, `proxy.conf.js` con `API_TARGET`, `FRONTEND_ORIGIN`; las pruebas de punta a punta pasan por el proxy | Cumple |
+
+## Criterios de éxito
+
+| Criterio | Resultado | Estado |
+|---|---|---|
+| CE-012 La aplicación funciona con `docker compose up --build` | Job `docker` en verde: API sana, registro y ruta de Angular a través de nginx | Cumple |
+| CE-013 El job `e2e` recorre H6, H9, H10, H17 y H18 | 6 pruebas en verde en el PR #43 (también H7 y H19) | Cumple |
+| CE-014 El pipeline falla con menos del 95 % de cobertura | Comprobado en local con un umbral del 100 %: Jest termina con error | Cumple |
+
+## Hallazgos corregidos durante la verificación
+
+- **CodeQL, `js/missing-rate-limiting` (alta)**: la API no limitaba las peticiones por IP; solo el inicio de sesión
+  tenía límite de intentos. Se agregó `express-rate-limit` (300 peticiones por minuto, `RATE_LIMIT_PER_MINUTE`) con
+  sus pruebas, como RF-032.
+- **CodeQL, `js/unused-local-variable`**: `app.routes.spec.ts` importaba la página de respaldos pero no probaba la
+  ruta `/respaldos`; una edición anterior no se había aplicado. Se agregó el caso.
+- **`npm audit`**: aparecieron advisories nuevas, una alta en `body-parser` (backend) y otra alta en
+  `@angular/router` (frontend, código que llega al navegador). Se actualizaron Express (transitiva) y Angular a
+  21.2.25/21.2.28; `undici` de `@angular/build` se fijó en 7.30.1 con un *override*, porque la corrección oficial
+  exige Angular 22.
+- **Prueba de punta a punta de respaldos**: suponía que el respaldo tenía una sola tarea, pero el tablero es compartido
+  por todos los usuarios; ahora busca su propia tarea por título.

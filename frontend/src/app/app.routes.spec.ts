@@ -12,6 +12,7 @@ describe('rutas', () => {
   it.each([
     ['', Board],
     ['estadisticas', Stats],
+    ['respaldos', Backup],
   ])('"/%s" muestra su pantalla y exige sesión', (path, component) => {
     expect(route(path)?.component).toBe(component);
     expect(route(path)?.canActivate).toEqual([authGuard]);

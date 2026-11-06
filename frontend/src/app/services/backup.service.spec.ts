@@ -4,8 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { BackupFile } from '../models/backup';
 import { BackupService } from './backup.service';
-
-const API_URL = 'http://localhost:3000/api';
+import { API_URL } from '../api';
 
 describe('BackupService', () => {
   let service: BackupService;

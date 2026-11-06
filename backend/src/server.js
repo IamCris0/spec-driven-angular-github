@@ -33,6 +33,10 @@ for (const signal of ['SIGINT', 'SIGTERM']) {
 // Respaldo al arrancar y cada BACKUP_INTERVAL_HOURS horas (specs/003-respaldos-validaciones, H15).
 startBackupSchedule(db, backups);
 
-createApp(db, { jwtSecret }).listen(PORT, () => {
+// FRONTEND_ORIGIN vacía o ausente: se usa el origen de ng serve (specs/004-calidad-despliegue, H24).
+const frontendOrigin = process.env.FRONTEND_ORIGIN || undefined;
+const rateLimitPerMinute = Number(process.env.RATE_LIMIT_PER_MINUTE) || undefined;
+
+createApp(db, { jwtSecret, frontendOrigin, rateLimitPerMinute }).listen(PORT, () => {
   console.log(`API de TaskFlow escuchando en http://localhost:${PORT}/api`);
 });
