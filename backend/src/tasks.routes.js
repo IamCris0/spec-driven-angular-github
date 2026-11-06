@@ -3,7 +3,12 @@ const express = require('express');
 const STATUSES = ['pendiente', 'en_progreso', 'hecha'];
 const PRIORITIES = ['baja', 'media', 'alta'];
 const MAX_TITLE_LENGTH = 120;
+const MAX_DESCRIPTION_LENGTH = 1000;
+const MAX_ASSIGNEE_LENGTH = 60;
 const MAX_COMMENT_LENGTH = 500;
+// Rango de fechas límite razonable (specs/003-respaldos-validaciones, H19).
+const MIN_DUE_DATE = '2000-01-01';
+const MAX_DUE_DATE = '2099-12-31';
 
 /** true si es una fecha real con formato AAAA-MM-DD (rechaza, por ejemplo, el 30 de febrero). */
 function isValidDate(value) {
@@ -28,14 +33,25 @@ function validateTaskInput({ title, description, priority, assignee, due_date: d
   if (description != null && typeof description !== 'string') {
     return 'La descripción debe ser texto';
   }
+  if (description != null && description.trim().length > MAX_DESCRIPTION_LENGTH) {
+    return `La descripción no puede superar los ${MAX_DESCRIPTION_LENGTH} caracteres`;
+  }
   if (priority != null && !PRIORITIES.includes(priority)) {
     return 'La prioridad debe ser baja, media o alta';
   }
   if (assignee != null && typeof assignee !== 'string') {
     return 'El responsable debe ser texto';
   }
-  if (dueDate != null && dueDate !== '' && !isValidDate(dueDate)) {
-    return 'La fecha límite no es válida';
+  if (assignee != null && assignee.trim().length > MAX_ASSIGNEE_LENGTH) {
+    return `El responsable no puede superar los ${MAX_ASSIGNEE_LENGTH} caracteres`;
+  }
+  if (dueDate != null && dueDate !== '') {
+    if (!isValidDate(dueDate)) {
+      return 'La fecha límite no es válida';
+    }
+    if (dueDate < MIN_DUE_DATE || dueDate > MAX_DUE_DATE) {
+      return 'La fecha límite debe estar entre los años 2000 y 2099';
+    }
   }
   return null;
 }
@@ -154,4 +170,4 @@ function createTasksRouter(repository, comments) {
   return router;
 }
 
-module.exports = { createTasksRouter };
+module.exports = { createTasksRouter, validateTaskInput, blankToNull, STATUSES };

@@ -1,5 +1,6 @@
 const express = require('express');
 const { createAuth } = require('./auth');
+const { createBackupRouter } = require('./backup.routes');
 const { createCommentsRepository } = require('./comments.repository');
 const { createStatsRouter } = require('./stats.routes');
 const { createTasksRepository } = require('./tasks.repository');
@@ -8,6 +9,7 @@ const { createUsersRepository } = require('./users.repository');
 
 // Origen del frontend de Angular durante el desarrollo (ng serve).
 const FRONTEND_ORIGIN = 'http://localhost:4200';
+const BACKUP_BODY_LIMIT = '2mb';
 
 const CLIENT_ERROR_MESSAGES = {
   'entity.parse.failed': 'El cuerpo de la petición no es un JSON válido',
@@ -26,6 +28,27 @@ function cors(req, res, next) {
     return res.sendStatus(204);
   }
 
+  next();
+}
+
+// Cabeceras de seguridad básicas (specs/003-respaldos-validaciones, RF-024): el navegador no adivina el
+// tipo de las respuestas, la API no se puede incrustar en un iframe y no se filtra la URL de origen.
+function securityHeaders(req, res, next) {
+  res.set({
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'no-referrer',
+  });
+  next();
+}
+
+// Las rutas solo entienden JSON. Una petición sin Content-Type (sin cuerpo) se deja pasar: la validación
+// de cada ruta responde 400 con el campo que falta.
+function requireJsonBody(req, res, next) {
+  const hasType = Boolean(req.get('Content-Type'));
+  if (['POST', 'PUT', 'PATCH'].includes(req.method) && hasType && !req.is('application/json')) {
+    return res.status(415).json({ error: 'El cuerpo de la petición debe ser JSON' });
+  }
   next();
 }
 
@@ -62,7 +85,18 @@ function createApp(db, { jwtSecret, bcryptRounds = 10 } = {}) {
   const app = express();
   const auth = createAuth({ users: createUsersRepository(db), jwtSecret, bcryptRounds });
 
+  app.disable('x-powered-by');
+  app.use(securityHeaders);
   app.use(cors);
+  app.use(requireJsonBody);
+  // Los respaldos pueden pesar hasta 2 MB; el resto de la API se queda con el límite de 100 KB. Va antes
+  // del express.json() general y comprueba la sesión antes de leer el cuerpo.
+  app.use(
+    '/api/backup',
+    auth.requireAuth,
+    express.json({ limit: BACKUP_BODY_LIMIT }),
+    createBackupRouter(db),
+  );
   app.use(express.json());
   app.use('/api/auth', auth.router);
   app.use(

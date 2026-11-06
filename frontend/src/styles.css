@@ -35,6 +35,9 @@
   .field-error {
     @apply mt-1 text-sm text-rose-600 dark:text-rose-400;
   }
+  .alert-success {
+    @apply rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200;
+  }
   .alert-error {
     @apply rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200;
   }

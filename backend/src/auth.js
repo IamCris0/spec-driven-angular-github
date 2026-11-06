@@ -30,6 +30,10 @@ function validateRegistration({ name, email, password }) {
   if (Buffer.byteLength(password) > MAX_PASSWORD_BYTES) {
     return 'La contraseña es demasiado larga';
   }
+  // Solo en el registro: las cuentas creadas antes de esta regla siguen entrando con su contraseña.
+  if (!/\p{L}/u.test(password) || !/\p{N}/u.test(password)) {
+    return 'La contraseña debe incluir letras y números';
+  }
   return null;
 }
 

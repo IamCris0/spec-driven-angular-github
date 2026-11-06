@@ -3,6 +3,11 @@ import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule } from '@a
 import { TASK_PRIORITIES, Task, TaskInput, TaskPriority } from '../../models/task';
 
 const MAX_TITLE_LENGTH = 120;
+// Mismos límites y mensajes que la API (specs/003-respaldos-validaciones, H19).
+export const MAX_DESCRIPTION_LENGTH = 1000;
+const MAX_ASSIGNEE_LENGTH = 60;
+export const MIN_DUE_DATE = '2000-01-01';
+export const MAX_DUE_DATE = '2099-12-31';
 
 // Hay varios formularios a la vez (crear y editar): cada uno necesita ids únicos.
 let nextFormId = 0;
@@ -13,6 +18,24 @@ function titleValidator(control: AbstractControl<string>) {
     return { required: true };
   }
   return title.length > MAX_TITLE_LENGTH ? { maxlength: true } : null;
+}
+
+const maxLength = (max: number, message: string) => (control: AbstractControl<string>) =>
+  control.value.trim().length > max ? { message } : null;
+
+// El input de fecha admite años de cinco cifras, que como texto quedarían dentro del rango: primero se
+// exige el formato AAAA-MM-DD, igual que la API.
+function dueDateValidator(control: AbstractControl<string>) {
+  const value = control.value;
+  if (!value) {
+    return null;
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return { message: 'La fecha límite no es válida' };
+  }
+  return value < MIN_DUE_DATE || value > MAX_DUE_DATE
+    ? { message: 'La fecha límite debe estar entre los años 2000 y 2099' }
+    : null;
 }
 
 @Component({
@@ -28,14 +51,39 @@ export class TaskForm implements OnInit {
 
   protected readonly formId = nextFormId++;
   protected readonly priorities = TASK_PRIORITIES;
+  protected readonly maxDescription = MAX_DESCRIPTION_LENGTH;
+  protected readonly minDueDate = MIN_DUE_DATE;
+  protected readonly maxDueDate = MAX_DUE_DATE;
   protected readonly submitted = signal(false);
   protected readonly form = new FormGroup({
     title: new FormControl('', { nonNullable: true, validators: [titleValidator] }),
-    description: new FormControl('', { nonNullable: true }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        maxLength(
+          MAX_DESCRIPTION_LENGTH,
+          `La descripción no puede superar los ${MAX_DESCRIPTION_LENGTH} caracteres`,
+        ),
+      ],
+    }),
     priority: new FormControl<TaskPriority>('media', { nonNullable: true }),
-    assignee: new FormControl('', { nonNullable: true }),
-    due_date: new FormControl('', { nonNullable: true }),
+    assignee: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        maxLength(
+          MAX_ASSIGNEE_LENGTH,
+          `El responsable no puede superar los ${MAX_ASSIGNEE_LENGTH} caracteres`,
+        ),
+      ],
+    }),
+    due_date: new FormControl('', { nonNullable: true, validators: [dueDateValidator] }),
   });
+
+  /** Mensaje de error de un campo opcional, después de tocarlo o de intentar guardar. */
+  protected message(name: 'description' | 'assignee' | 'due_date'): string | null {
+    const control = this.form.controls[name];
+    return control.touched || this.submitted() ? (control.errors?.['message'] ?? null) : null;
+  }
 
   ngOnInit(): void {
     const task = this.task();
@@ -57,7 +105,7 @@ export class TaskForm implements OnInit {
   protected submit(): void {
     if (this.form.invalid) {
       this.submitted.set(true);
-      this.title.markAsTouched();
+      this.form.markAllAsTouched();
       return;
     }
 
