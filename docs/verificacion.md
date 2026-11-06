@@ -57,7 +57,7 @@ recargar la página, editar, eliminar con confirmación, filtrar por responsable
 | CE-001 Crear una tarea en menos de 30 s | Solo el título es obligatorio y el formulario está siempre visible. No se cronometró con usuarios reales | Pendiente de medir con un usuario |
 | CE-002 El 100 % de los cambios de estado persisten al recargar | La API guarda en SQLite antes de responder; verificado en punta a punta con recarga | Cumple |
 | CE-003 Las historias P1 tienen pruebas automatizadas en GitHub Actions | Jobs `backend` y `frontend` en verde en los PR #3 y #4, que incluyen las pruebas de H1, H2 y H3 | Cumple |
-| CE-004 Nada llega a `main` sin PR aprobado y pipeline en verde | Ver abajo | **No cumple todavía** |
+| CE-004 Nada llega a `main` sin PR aprobado y pipeline en verde | Ver abajo | **Cumple desde el 2026-10-10**, adaptado a un equipo de una persona |
 
 ### CE-004 y Principio III de la constitución
 
@@ -76,6 +76,13 @@ Para cumplirlo, en **Settings → Branches → Add rule** para `main` y `develop
 3. Do not allow bypassing the above settings.
 
 Después, actualizar `develop` con un PR desde `main` y abrir los siguientes PR hacia `develop`.
+
+**Actualización (2026-10-10).** `main` y `develop` quedaron protegidas: Pull Request obligatorio, checks
+`backend` y `frontend` obligatorios, sin excepciones para administradores y sin force push ni borrado (issue #36).
+El proyecto es individual y GitHub no permite aprobar un PR propio, así que la regla exige 0 aprobaciones y la
+constitución 1.1.0 sustituye la aprobación por una revisión escrita en el PR, asistida por IA (ver
+[`flujo-de-trabajo.md`](flujo-de-trabajo.md)). Los cambios anteriores a esa fecha (PR #1 a #20 y dos push directos)
+se mantienen como están: el historial no se reescribe.
 
 ## Hallazgo corregido durante la verificación
 
