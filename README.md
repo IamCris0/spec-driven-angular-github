@@ -8,6 +8,9 @@ El sistema de ejemplo, **TaskFlow**, es un gestor de tareas con tablero Kanban h
 **Node.js/Express** y base de datos **SQLite**, desarrollado con **Spec Driven Development** usando la estructura
 de **GitHub Spec Kit**.
 
+> **¿Revisas el proyecto?** Empieza por la [guía para el docente](docs/guia-docente.md): cada punto del enunciado con
+> su evidencia y un recorrido de 10 minutos. Lo que sigue está en la [hoja de ruta](docs/hoja-de-ruta.md).
+
 ## Funcionalidades
 
 | Versión | Qué incluye | Especificación |
@@ -274,6 +277,9 @@ specs/
 ├── 003-respaldos-validaciones/   v3: respaldos y validaciones
 └── 004-calidad-despliegue/       v4: Docker, pruebas de punta a punta, CodeQL y versiones
 docs/
+├── guia-docente.md               Qué pedía el enunciado y dónde está la evidencia
+├── hoja-de-ruta.md               Pasos pendientes, cómo agregar una funcionalidad y próximas versiones
+├── informe/, presentacion/       Informe APA 7 (Word y Markdown), evidencias y guion
 ├── flujo-de-trabajo.md           Ramas, commits, PR, code review y gestión
 ├── verificacion.md               Verificación de requisitos y criterios de éxito
 └── capturas/                     Capturas de pantalla del README
