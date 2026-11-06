@@ -63,6 +63,7 @@ Ordenadas por valor para la asignatura y para la empresa del caso.
 | Respaldos | En el mismo disco que la base | Copiar la carpeta de respaldos a otro servidor o a la nube (regla 3-2-1) |
 | Búsqueda | No distingue mayúsculas solo en letras sin tilde | `COLLATE` con ICU o normalizar el texto |
 | Acciones de GitHub | `actions/checkout@v4` y `setup-node@v4` usan Node 20, en retirada | Dependabot abrirá el PR; revisarlo y fusionarlo |
+| Dependencias de desarrollo | Advisories moderadas en `glob`/`minimatch` dentro de Jest y Angular CLI (no llegan a producción: `npm audit --omit=dev` da 0) | Actualizar cuando salga Jest con la corrección y migrar a Angular 22 en una rama propia |
 | Pruebas del frontend | Sin umbral de cobertura | Agregar `@vitest/coverage-v8` y un umbral como en la API |
 | CE-001 | Sin medir con una persona | Ver §1, paso 5 |
 

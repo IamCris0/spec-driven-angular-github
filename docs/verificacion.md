@@ -327,5 +327,10 @@ Comprobación de [`004-calidad-despliegue/spec.md`](../specs/004-calidad-desplie
   `@angular/router` (frontend, código que llega al navegador). Se actualizaron Express (transitiva) y Angular a
   21.2.25/21.2.28; `undici` de `@angular/build` se fijó en 7.30.1 con un *override*, porque la corrección oficial
   exige Angular 22.
+- **`npm audit` (6 de noviembre)**: apareció una advisory moderada en `qs` (DoS en `qs.stringify`), dependencia
+  de Express que sí llega a producción; se corrigió con `npm audit fix` (6.16.2), sin cambios de versión mayor, y
+  `npm audit --omit=dev` vuelve a dar 0 en `backend` y `frontend`. Quedan advisories moderadas solo en herramientas
+  de desarrollo (`glob`/`minimatch` dentro de Jest y de Angular CLI): la corrección que propone npm es bajar Jest a la 25
+  o subir a Angular CLI 22, así que se registran como deuda técnica en la hoja de ruta.
 - **Prueba de punta a punta de respaldos**: suponía que el respaldo tenía una sola tarea, pero el tablero es compartido
   por todos los usuarios; ahora busca su propia tarea por título.
